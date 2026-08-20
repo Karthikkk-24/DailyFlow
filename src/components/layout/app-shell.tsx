@@ -42,8 +42,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { hydrated, state, storageError } = useDayFlow();
   const [open, setOpen] = useState(false);
-  const hideChrome =
-    pathname.startsWith("/onboarding") || pathname.startsWith("/focus");
+  const hideChrome = pathname.startsWith("/onboarding");
 
   if (!hydrated) {
     return (
