@@ -9,9 +9,31 @@ import type {
   Task,
   UserProfile,
 } from "@/types";
-import { createId, nowIso, todayKey } from "@/lib/utils";
+import { createId, nowIso, todayKey, weekDates, timeToMinutes, minutesToTime } from "@/lib/utils";
 import { format, subDays, addDays, getDay } from "date-fns";
 import { recomputeTodaySnapshot } from "@/lib/analytics/score";
+
+function deepWorkBlocksForWorkingHours(profile: UserProfile): ScheduleBlock[] {
+  const startMin = timeToMinutes(profile.workingHours.start);
+  const endMin = timeToMinutes(profile.workingHours.end);
+  if (endMin <= startMin) return [];
+
+  const blockEnd = minutesToTime(Math.min(endMin, startMin + 120));
+  return weekDates(new Date(), 1)
+    .filter((d) => {
+      const dow = getDay(d);
+      return dow >= 1 && dow <= 5;
+    })
+    .map((d) => ({
+      id: createId("blk"),
+      title: "Deep work",
+      category: "deep_work" as const,
+      date: format(d, "yyyy-MM-dd"),
+      startTime: profile.workingHours.start,
+      endTime: blockEnd,
+      notes: "Seeded from your preferred working hours",
+    }));
+}
 
 function defaultProfile(overrides?: Partial<UserProfile>): UserProfile {
   return {
@@ -434,10 +456,19 @@ export function personalizeAfterOnboarding(
       createdAt: now,
     }));
 
+  const seededBlocks = deepWorkBlocksForWorkingHours(profile);
+  const occupied = new Set(
+    base.scheduleBlocks
+      .filter((b) => b.category === "deep_work")
+      .map((b) => b.date),
+  );
+  const newBlocks = seededBlocks.filter((b) => !occupied.has(b.date));
+
   return {
     ...base,
     profile,
     habits: [...base.habits, ...newHabits],
+    scheduleBlocks: [...base.scheduleBlocks, ...newBlocks],
     meta: {
       ...base.meta,
       onboardingCompleted: true,

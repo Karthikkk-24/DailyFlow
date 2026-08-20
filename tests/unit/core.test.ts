@@ -137,3 +137,22 @@ describe("parseImportJson", () => {
     expect(result.error).toMatch(/Invalid DayFlow/i);
   });
 });
+
+describe("personalizeAfterOnboarding", () => {
+  it("seeds weekday deep-work blocks inside working hours", async () => {
+    const { personalizeAfterOnboarding, createSeededState } = await import(
+      "@/lib/seed/demo-data"
+    );
+    const base = createSeededState();
+    // Clear blocks so seeding is observable
+    const emptyBlocks = { ...base, scheduleBlocks: [] };
+    const next = personalizeAfterOnboarding(emptyBlocks, {
+      ...base.profile,
+      workingHours: { start: "10:00", end: "16:00" },
+    });
+    const deep = next.scheduleBlocks.filter((b) => b.category === "deep_work");
+    expect(deep.length).toBeGreaterThan(0);
+    expect(deep.every((b) => b.startTime === "10:00")).toBe(true);
+    expect(deep.every((b) => b.endTime === "12:00")).toBe(true);
+  });
+});
