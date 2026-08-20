@@ -4,12 +4,16 @@ import Link from "next/link";
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { differenceInCalendarDays, parseISO } from "date-fns";
-import { ArrowLeft, Check, Trash2 } from "lucide-react";
+import { ArrowLeft, Check, Pencil, Trash2 } from "lucide-react";
 import { useDayFlow } from "@/context/dayflow-provider";
 import { Badge, EmptyState, PageHeader, ProgressRing } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/modal";
 import { Select } from "@/components/ui/input";
+import {
+  GoalFormModal,
+  type GoalFormValues,
+} from "@/components/goals/goal-form-modal";
 import { goalProgress } from "@/lib/analytics/score";
 import { cn } from "@/lib/utils";
 import type { GoalStatus } from "@/types";
@@ -19,6 +23,7 @@ export default function GoalDetailPage() {
   const router = useRouter();
   const { state, dispatch } = useDayFlow();
   const [confirm, setConfirm] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const goal = state.goals.find((g) => g.id === params.id);
 
   if (!goal) {
@@ -38,6 +43,14 @@ export default function GoalDetailPage() {
   const daysLeft = goal.targetDate
     ? differenceInCalendarDays(parseISO(goal.targetDate), new Date())
     : null;
+
+  function saveEdit(values: GoalFormValues) {
+    dispatch({
+      type: "UPDATE_GOAL",
+      id: goal!.id,
+      patch: values,
+    });
+  }
 
   return (
     <div>
@@ -97,15 +110,34 @@ export default function GoalDetailPage() {
           <option value="paused">Paused</option>
           <option value="completed">Completed</option>
         </Select>
+        <Button variant="secondary" onClick={() => setEditOpen(true)}>
+          <Pencil className="h-4 w-4" /> Edit
+        </Button>
         <Button variant="danger" onClick={() => setConfirm(true)}>
           <Trash2 className="h-4 w-4" /> Delete
         </Button>
       </div>
 
       <section className="mt-8">
-        <PageHeader title="Milestones" description="Mark milestones to update progress automatically." />
+        <PageHeader
+          title="Milestones"
+          description="Mark milestones to update progress automatically."
+          actions={
+            <Button variant="secondary" size="sm" onClick={() => setEditOpen(true)}>
+              Manage milestones
+            </Button>
+          }
+        />
         {goal.milestones.length === 0 ? (
-          <EmptyState title="No milestones" description="This goal has no milestones yet." />
+          <EmptyState
+            title="No milestones"
+            description="Add milestones to track progress."
+            action={
+              <Button variant="secondary" onClick={() => setEditOpen(true)}>
+                Add milestones
+              </Button>
+            }
+          />
         ) : (
           <ul className="space-y-2">
             {goal.milestones.map((m) => (
@@ -145,6 +177,13 @@ export default function GoalDetailPage() {
           </ul>
         )}
       </section>
+
+      <GoalFormModal
+        open={editOpen}
+        onClose={() => setEditOpen(false)}
+        goal={goal}
+        onSave={saveEdit}
+      />
 
       <ConfirmDialog
         open={confirm}
