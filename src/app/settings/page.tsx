@@ -10,7 +10,7 @@ import { ConfirmDialog } from "@/components/ui/modal";
 import { useToast } from "@/components/ui/toast";
 import { downloadJson } from "@/lib/utils";
 import { backupCurrentState, parseImportJson } from "@/lib/storage";
-import type { EnergyPattern, ThemeMode } from "@/types";
+import type { AppState, EnergyPattern, ThemeMode } from "@/types";
 import { cn } from "@/lib/utils";
 
 export default function SettingsPage() {
@@ -27,6 +27,7 @@ export default function SettingsPage() {
   const [resetOpen, setResetOpen] = useState(false);
   const [keepName, setKeepName] = useState(true);
   const [importError, setImportError] = useState("");
+  const [pendingImport, setPendingImport] = useState<AppState | null>(null);
 
   function saveProfile() {
     if (!name.trim()) {
@@ -60,8 +61,14 @@ export default function SettingsPage() {
       push(result.error ?? "Import failed", "error");
       return;
     }
+    setPendingImport(result.data);
+  }
+
+  function confirmImport() {
+    if (!pendingImport) return;
     backupCurrentState();
-    dispatch({ type: "REPLACE_STATE", state: result.data });
+    dispatch({ type: "REPLACE_STATE", state: pendingImport });
+    setPendingImport(null);
     push("Data imported successfully", "success");
   }
 
@@ -190,6 +197,16 @@ export default function SettingsPage() {
           </p>
         </Card>
       </div>
+
+      <ConfirmDialog
+        open={!!pendingImport}
+        onClose={() => setPendingImport(null)}
+        title="Replace all local data?"
+        description="This will overwrite your current DayFlow data with the imported file. A backup of the previous state will be saved first."
+        confirmLabel="Replace data"
+        danger
+        onConfirm={confirmImport}
+      />
 
       <ConfirmDialog
         open={resetOpen}
