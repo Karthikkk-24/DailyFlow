@@ -3,13 +3,30 @@
 import { useMemo, useState } from "react";
 import { format, isSameDay } from "date-fns";
 import { Plus, Trash2 } from "lucide-react";
+import {
+  DndContext,
+  type DragEndEvent,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  useDraggable,
+  useDroppable,
+} from "@dnd-kit/core";
+import { CSS } from "@dnd-kit/utilities";
 import { useDayFlow } from "@/context/dayflow-provider";
 import { Badge, EmptyState, PageHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FieldError, Input, Label, Select, Textarea } from "@/components/ui/input";
 import { ConfirmDialog, Modal } from "@/components/ui/modal";
 import { BLOCK_CATEGORIES, type BlockCategory, type ScheduleBlock } from "@/types";
-import { cn, todayKey, weekDates, timeToMinutes } from "@/lib/utils";
+import {
+  cn,
+  todayKey,
+  weekDates,
+  timeToMinutes,
+  minutesToTime,
+} from "@/lib/utils";
 
 const HOURS = Array.from({ length: 16 }, (_, i) => i + 6); // 6..21
 const CATEGORY_COLORS: Record<BlockCategory, string> = {
@@ -19,6 +36,86 @@ const CATEGORY_COLORS: Record<BlockCategory, string> = {
   personal: "#7C3AED",
   study: "#D97706",
 };
+
+function slotId(date: string, hour: number) {
+  return `slot|${date}|${hour}`;
+}
+
+function parseSlotId(id: string): { date: string; hour: number } | null {
+  if (!id.startsWith("slot|")) return null;
+  const [, date, hourStr] = id.split("|");
+  const hour = Number(hourStr);
+  if (!date || Number.isNaN(hour)) return null;
+  return { date, hour };
+}
+
+function DraggableBlock({
+  block,
+  onOpen,
+}: {
+  block: ScheduleBlock;
+  onOpen: (b: ScheduleBlock) => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } =
+    useDraggable({ id: block.id, data: { block } });
+  const top = ((timeToMinutes(block.startTime) - 6 * 60) / 60) * 64;
+  const height = Math.max(
+    28,
+    ((timeToMinutes(block.endTime) - timeToMinutes(block.startTime)) / 60) * 64,
+  );
+
+  return (
+    <div
+      ref={setNodeRef}
+      {...listeners}
+      {...attributes}
+      onClick={(e) => {
+        e.stopPropagation();
+        if (!isDragging) onOpen(block);
+      }}
+      className={cn(
+        "absolute inset-x-1 z-10 cursor-grab touch-none overflow-hidden rounded-lg border border-white/20 px-2 py-1 text-left text-white shadow-sm active:cursor-grabbing",
+        isDragging && "opacity-60 ring-2 ring-white",
+      )}
+      style={{
+        top,
+        height,
+        background: CATEGORY_COLORS[block.category],
+        transform: CSS.Translate.toString(transform),
+      }}
+      title="Drag to move · click to edit"
+    >
+      <p className="truncate text-xs font-semibold">{block.title}</p>
+      <p className="truncate text-[10px] opacity-90">
+        {block.startTime}–{block.endTime}
+      </p>
+    </div>
+  );
+}
+
+function HourSlot({
+  date,
+  hour,
+  onCreate,
+}: {
+  date: string;
+  hour: number;
+  onCreate: () => void;
+}) {
+  const { setNodeRef, isOver } = useDroppable({ id: slotId(date, hour) });
+  return (
+    <button
+      ref={setNodeRef}
+      type="button"
+      className={cn(
+        "h-16 w-full border-b border-border/60 hover:bg-muted/40",
+        isOver && "bg-primary/15",
+      )}
+      aria-label={`Add or drop block ${date} ${hour}:00`}
+      onClick={onCreate}
+    />
+  );
+}
 
 export default function PlannerPage() {
   const { state, dispatch } = useDayFlow();
@@ -36,6 +133,13 @@ export default function PlannerPage() {
   });
   const [error, setError] = useState("");
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 180, tolerance: 8 },
+    }),
+  );
+
   const blocksByDate = useMemo(() => {
     const map = new Map<string, ScheduleBlock[]>();
     for (const d of days) {
@@ -52,10 +156,11 @@ export default function PlannerPage() {
 
   function openCreate(date?: string, hour?: number) {
     setEditing(null);
-    const start = hour !== undefined ? `${String(hour).padStart(2, "0")}:00` : "09:00";
+    const start =
+      hour !== undefined ? `${String(hour).padStart(2, "0")}:00` : "09:00";
     const end =
       hour !== undefined
-        ? `${String(hour + 1).padStart(2, "0")}:00`
+        ? `${String(Math.min(hour + 1, 22)).padStart(2, "0")}:00`
         : "10:00";
     setForm({
       title: "",
@@ -108,15 +213,44 @@ export default function PlannerPage() {
     setOpen(false);
   }
 
-  function moveBlock(block: ScheduleBlock, date: string) {
-    dispatch({ type: "UPDATE_BLOCK", id: block.id, patch: { date } });
+  function moveBlockToSlot(block: ScheduleBlock, date: string, hour: number) {
+    const duration = Math.max(
+      30,
+      timeToMinutes(block.endTime) - timeToMinutes(block.startTime),
+    );
+    const startMin = hour * 60;
+    const endMin = Math.min(22 * 60, startMin + duration);
+    dispatch({
+      type: "UPDATE_BLOCK",
+      id: block.id,
+      patch: {
+        date,
+        startTime: minutesToTime(startMin),
+        endTime: minutesToTime(endMin),
+      },
+    });
+  }
+
+  function onDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over) return;
+    const block = state.scheduleBlocks.find((b) => b.id === active.id);
+    const slot = parseSlotId(String(over.id));
+    if (!block || !slot) return;
+    if (
+      block.date === slot.date &&
+      timeToMinutes(block.startTime) === slot.hour * 60
+    ) {
+      return;
+    }
+    moveBlockToSlot(block, slot.date, slot.hour);
   }
 
   return (
     <div>
       <PageHeader
         title="Planner"
-        description="Weekly time blocks — distinct from tasks."
+        description="Weekly time blocks — drag to move date and time."
         actions={
           <Button onClick={() => openCreate()}>
             <Plus className="h-4 w-4" /> New block
@@ -136,101 +270,69 @@ export default function PlannerPage() {
         ))}
       </div>
 
-      <div className="overflow-x-auto">
-        <div className="min-w-[900px]">
-          <div className="mb-2 grid grid-cols-[56px_repeat(7,1fr)] gap-2">
-            <div />
-            {days.map((d) => (
-              <div
-                key={d.toISOString()}
-                className={cn(
-                  "rounded-xl px-2 py-2 text-center text-sm",
-                  isSameDay(d, new Date()) && "bg-primary/15 text-primary",
-                )}
-              >
-                <div className="font-medium">{format(d, "EEE")}</div>
-                <div className="text-xs text-muted-foreground">{format(d, "MMM d")}</div>
-              </div>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-[56px_repeat(7,1fr)] gap-2">
-            <div className="space-y-0">
-              {HOURS.map((h) => (
+      <DndContext sensors={sensors} onDragEnd={onDragEnd}>
+        <div className="overflow-x-auto">
+          <div className="min-w-[900px]">
+            <div className="mb-2 grid grid-cols-[56px_repeat(7,1fr)] gap-2">
+              <div />
+              {days.map((d) => (
                 <div
-                  key={h}
-                  className="h-16 pr-2 text-right text-[11px] text-muted-foreground"
+                  key={d.toISOString()}
+                  className={cn(
+                    "rounded-xl px-2 py-2 text-center text-sm",
+                    isSameDay(d, new Date()) && "bg-primary/15 text-primary",
+                  )}
                 >
-                  {String(h).padStart(2, "0")}:00
+                  <div className="font-medium">{format(d, "EEE")}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {format(d, "MMM d")}
+                  </div>
                 </div>
               ))}
             </div>
 
-            {days.map((d) => {
-              const key = format(d, "yyyy-MM-dd");
-              const blocks = blocksByDate.get(key) ?? [];
-              return (
-                <div
-                  key={key}
-                  className="relative rounded-xl border border-border bg-card/50"
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={(e) => {
-                    const id = e.dataTransfer.getData("text/block-id");
-                    const block = state.scheduleBlocks.find((b) => b.id === id);
-                    if (block && block.date !== key) moveBlock(block, key);
-                  }}
-                >
-                  {HOURS.map((h) => (
-                    <button
-                      key={h}
-                      type="button"
-                      className="h-16 w-full border-b border-border/60 hover:bg-muted/40"
-                      aria-label={`Add block ${key} ${h}:00`}
-                      onClick={() => openCreate(key, h)}
-                    />
-                  ))}
-                  {blocks.map((block) => {
-                    const top =
-                      ((timeToMinutes(block.startTime) - 6 * 60) / 60) * 64;
-                    const height = Math.max(
-                      28,
-                      ((timeToMinutes(block.endTime) -
-                        timeToMinutes(block.startTime)) /
-                        60) *
-                        64,
-                    );
-                    return (
-                      <div
+            <div className="grid grid-cols-[56px_repeat(7,1fr)] gap-2">
+              <div className="space-y-0">
+                {HOURS.map((h) => (
+                  <div
+                    key={h}
+                    className="h-16 pr-2 text-right text-[11px] text-muted-foreground"
+                  >
+                    {String(h).padStart(2, "0")}:00
+                  </div>
+                ))}
+              </div>
+
+              {days.map((d) => {
+                const key = format(d, "yyyy-MM-dd");
+                const blocks = blocksByDate.get(key) ?? [];
+                return (
+                  <div
+                    key={key}
+                    className="relative rounded-xl border border-border bg-card/50"
+                  >
+                    {HOURS.map((h) => (
+                      <HourSlot
+                        key={h}
+                        date={key}
+                        hour={h}
+                        onCreate={() => openCreate(key, h)}
+                      />
+                    ))}
+                    {blocks.map((block) => (
+                      <DraggableBlock
                         key={block.id}
-                        draggable
-                        onDragStart={(e) => {
-                          e.dataTransfer.setData("text/block-id", block.id);
-                        }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openEdit(block);
-                        }}
-                        className="absolute inset-x-1 cursor-pointer overflow-hidden rounded-lg border border-white/20 px-2 py-1 text-left text-white shadow-sm"
-                        style={{
-                          top,
-                          height,
-                          background: CATEGORY_COLORS[block.category],
-                        }}
-                        title="Drag to another day · click to edit"
-                      >
-                        <p className="truncate text-xs font-semibold">{block.title}</p>
-                        <p className="truncate text-[10px] opacity-90">
-                          {block.startTime}–{block.endTime}
-                        </p>
-                      </div>
-                    );
-                  })}
-                </div>
-              );
-            })}
+                        block={block}
+                        onOpen={openEdit}
+                      />
+                    ))}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
-      </div>
+      </DndContext>
 
       {state.scheduleBlocks.length === 0 && (
         <div className="mt-6">
@@ -242,7 +344,11 @@ export default function PlannerPage() {
         </div>
       )}
 
-      <Modal open={open} onClose={() => setOpen(false)} title={editing ? "Edit block" : "New block"}>
+      <Modal
+        open={open}
+        onClose={() => setOpen(false)}
+        title={editing ? "Edit block" : "New block"}
+      >
         <div className="space-y-3">
           <div>
             <Label htmlFor="btitle">Title</Label>
@@ -262,7 +368,9 @@ export default function PlannerPage() {
               }
             >
               {BLOCK_CATEGORIES.map((c) => (
-                <option key={c.value} value={c.value}>{c.label}</option>
+                <option key={c.value} value={c.value}>
+                  {c.label}
+                </option>
               ))}
             </Select>
           </div>
@@ -282,7 +390,9 @@ export default function PlannerPage() {
                 id="bstart"
                 type="time"
                 value={form.startTime}
-                onChange={(e) => setForm({ ...form, startTime: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, startTime: e.target.value })
+                }
               />
             </div>
             <div>
@@ -318,7 +428,9 @@ export default function PlannerPage() {
               <span />
             )}
             <div className="flex gap-2">
-              <Button variant="secondary" onClick={() => setOpen(false)}>Cancel</Button>
+              <Button variant="secondary" onClick={() => setOpen(false)}>
+                Cancel
+              </Button>
               <Button onClick={save}>Save</Button>
             </div>
           </div>
