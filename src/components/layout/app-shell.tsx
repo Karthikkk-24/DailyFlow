@@ -9,6 +9,7 @@ import {
   Flame,
   Home,
   Menu,
+  MoreHorizontal,
   Settings,
   Target,
   Timer,
@@ -35,14 +36,22 @@ const MOBILE_PRIMARY = [
   { href: "/tasks", label: "Tasks", icon: CheckSquare },
   { href: "/habits", label: "Habits", icon: Flame },
   { href: "/focus", label: "Focus", icon: Timer },
-  { href: "/settings", label: "More", icon: Settings },
-];
+] as const;
+
+const MOBILE_MORE = [
+  { href: "/goals", label: "Goals", icon: Target },
+  { href: "/planner", label: "Planner", icon: CalendarDays },
+  { href: "/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/settings", label: "Settings", icon: Settings },
+] as const;
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { hydrated, state, storageError } = useDayFlow();
   const [open, setOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
   const hideChrome = pathname.startsWith("/onboarding");
+  const moreActive = MOBILE_MORE.some((item) => pathname.startsWith(item.href));
 
   if (!hydrated) {
     return (
@@ -162,12 +171,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       >
         {MOBILE_PRIMARY.map((item) => {
           const Icon = item.icon;
-          const active =
-            item.href === "/settings"
-              ? ["/settings", "/goals", "/planner", "/analytics"].some((p) =>
-                  pathname.startsWith(p),
-                )
-              : pathname.startsWith(item.href);
+          const active = pathname.startsWith(item.href);
           return (
             <Link
               key={item.href}
@@ -182,7 +186,70 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </Link>
           );
         })}
+        <button
+          type="button"
+          onClick={() => setMoreOpen(true)}
+          className={cn(
+            "flex flex-1 flex-col items-center gap-1 py-2.5 text-[11px] font-medium",
+            moreActive || moreOpen ? "text-primary" : "text-muted-foreground",
+          )}
+          aria-haspopup="dialog"
+          aria-expanded={moreOpen}
+        >
+          <MoreHorizontal className="h-5 w-5" />
+          More
+        </button>
       </nav>
+
+      {moreOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <button
+            type="button"
+            className="absolute inset-0 bg-black/40"
+            aria-label="Close more menu"
+            onClick={() => setMoreOpen(false)}
+          />
+          <div
+            role="dialog"
+            aria-label="More destinations"
+            className="absolute inset-x-0 bottom-0 rounded-t-2xl border border-border bg-card p-4 pb-8 shadow-xl"
+          >
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="font-display text-lg">More</h2>
+              <button
+                type="button"
+                className="rounded-lg p-2 hover:bg-muted"
+                aria-label="Close"
+                onClick={() => setMoreOpen(false)}
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {MOBILE_MORE.map((item) => {
+                const Icon = item.icon;
+                const active = pathname.startsWith(item.href);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setMoreOpen(false)}
+                    className={cn(
+                      "flex items-center gap-3 rounded-xl border px-3 py-3 text-sm font-medium",
+                      active
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border hover:bg-muted",
+                    )}
+                  >
+                    <Icon className="h-4 w-4" />
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
