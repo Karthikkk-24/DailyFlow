@@ -5,6 +5,7 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
+  Legend,
   Line,
   LineChart,
   ResponsiveContainer,
@@ -16,12 +17,13 @@ import { useDayFlow } from "@/context/dayflow-provider";
 import { Card, PageHeader } from "@/components/ui/card";
 import {
   fillRange,
+  goalProgressOverTime,
   mostProductiveDay,
   mostProductiveHour,
   snapshotsInRange,
   sumFocusMinutes,
 } from "@/lib/analytics/insights";
-import { computeStreak } from "@/lib/analytics/score";
+import { computeStreak, goalProgress } from "@/lib/analytics/score";
 import { format, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -53,6 +55,10 @@ export default function AnalyticsPage() {
   const productiveDay = mostProductiveDay(data);
   const productiveHour = mostProductiveHour(state.focusSessions);
   const focusTotal = sumFocusMinutes(data);
+  const goalSeries = useMemo(
+    () => goalProgressOverTime(state.goals, days),
+    [state.goals, days],
+  );
 
   return (
     <div>
@@ -164,14 +170,50 @@ export default function AnalyticsPage() {
       </div>
 
       <Card className="mt-4">
-        <h3 className="mb-2 font-medium">Active goal progress</h3>
+        <h3 className="mb-4 font-medium">Goal progress over time</h3>
+        {goalSeries.series.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No goals to chart.</p>
+        ) : (
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={goalSeries.rows}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                <XAxis
+                  dataKey="label"
+                  tick={{ fontSize: 11 }}
+                  stroke="var(--muted-foreground)"
+                />
+                <YAxis
+                  domain={[0, 100]}
+                  tick={{ fontSize: 11 }}
+                  stroke="var(--muted-foreground)"
+                />
+                <Tooltip />
+                <Legend />
+                {goalSeries.series.map((s) => (
+                  <Line
+                    key={s.key}
+                    type="monotone"
+                    dataKey={s.key}
+                    name={s.name}
+                    stroke={s.color}
+                    strokeWidth={2}
+                    dot={false}
+                  />
+                ))}
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+      </Card>
+
+      <Card className="mt-4">
+        <h3 className="mb-2 font-medium">Current goal progress</h3>
         <ul className="space-y-3">
           {state.goals
             .filter((g) => g.status === "active")
             .map((g) => {
-              const done = g.milestones.filter((m) => m.completed).length;
-              const total = g.milestones.length || 1;
-              const pct = Math.round((done / total) * 100);
+              const pct = goalProgress(g.milestones);
               return (
                 <li key={g.id}>
                   <div className="mb-1 flex justify-between text-sm">
@@ -179,7 +221,10 @@ export default function AnalyticsPage() {
                     <span className="tabular-nums text-muted-foreground">{pct}%</span>
                   </div>
                   <div className="h-2 overflow-hidden rounded-full bg-muted">
-                    <div className="h-full rounded-full bg-primary" style={{ width: `${pct}%` }} />
+                    <div
+                      className="h-full rounded-full bg-primary"
+                      style={{ width: `${pct}%` }}
+                    />
                   </div>
                 </li>
               );

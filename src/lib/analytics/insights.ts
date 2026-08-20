@@ -1,6 +1,7 @@
-import type { AnalyticsSnapshot, FocusSession } from "@/types";
+import type { AnalyticsSnapshot, FocusSession, Goal } from "@/types";
 import { parseISO, subDays, format, getDay } from "date-fns";
 import { todayKey } from "@/lib/utils";
+import { goalProgress } from "@/lib/analytics/score";
 
 export function snapshotsInRange(
   snapshots: AnalyticsSnapshot[],
@@ -87,4 +88,53 @@ export function mostProductiveHour(sessions: FocusSession[]): string {
 
 export function sumFocusMinutes(snapshots: AnalyticsSnapshot[]) {
   return snapshots.reduce((n, s) => n + s.focusMinutes, 0);
+}
+
+const GOAL_LINE_COLORS = [
+  "var(--primary)",
+  "var(--accent)",
+  "#7C3AED",
+  "#2563EB",
+  "#16A34A",
+];
+
+/** Progress % for each goal as of end-of-day for each date in range. */
+export function goalProgressOverTime(
+  goals: Goal[],
+  days: 7 | 30,
+  asOf = new Date(),
+): {
+  rows: Record<string, string | number>[];
+  series: { key: string; name: string; color: string }[];
+} {
+  const tracked = goals
+    .filter((g) => g.status === "active" || g.status === "completed")
+    .slice(0, 5);
+
+  const series = tracked.map((g, i) => ({
+    key: `g_${g.id}`,
+    name: g.title,
+    color: GOAL_LINE_COLORS[i % GOAL_LINE_COLORS.length],
+  }));
+
+  const rows: Record<string, string | number>[] = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const day = subDays(asOf, i);
+    const key = format(day, "yyyy-MM-dd");
+    const row: Record<string, string | number> = {
+      date: key,
+      label: format(day, days === 7 ? "EEE" : "MMM d"),
+    };
+    for (const g of tracked) {
+      const normalized = g.milestones.map((m) => {
+        if (!m.completed) return { completed: false };
+        if (!m.completedAt) return { completed: true };
+        return { completed: todayKey(parseISO(m.completedAt)) <= key };
+      });
+      row[`g_${g.id}`] = goalProgress(normalized);
+    }
+    rows.push(row);
+  }
+
+  return { rows, series };
 }
