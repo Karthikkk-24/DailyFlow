@@ -1,0 +1,10 @@
+---
+description: "API design conventions — applies when creating or changing REST/GraphQL endpoints or schemas"
+alwaysApply: false
+---
+
+- Keep naming consistent across the whole API — one casing convention, one pluralization style, one pattern for similar operations (don't mix `getUser`/`fetch_user`/`user-details` across endpoints).
+- Keep request/response shapes consistent (e.g. always `{ data, error }` or always the raw object — pick one per project and stick to it).
+- Never break an existing endpoint or GraphQL field's contract silently — if a change would break existing consumers, either version it, add rather than replace, or flag it explicitly before making the change.
+- New fields/endpoints should be additive by default; treat removing or renaming an existing field/endpoint as a breaking change requiring explicit confirmation.
+- Document new endpoints/fields with a short GraphQL schema description or route comment — enough for another developer (or agent) to use it without reading the implementation.

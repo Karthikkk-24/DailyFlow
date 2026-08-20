@@ -1,0 +1,8 @@
+---
+description: "Code style — comments and readability"
+alwaysApply: true
+---
+
+- Write self-explanatory code (clear names, small functions) so comments aren't needed to explain *what* it does.
+- Only comment *why*, for non-obvious decisions — a tricky workaround, a business-rule constraint, a deliberate trade-off. Keep it to one line where possible.
+- No comment restating what the next line obviously does.

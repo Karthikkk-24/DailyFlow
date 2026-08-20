@@ -1,0 +1,13 @@
+---
+description: "Git and PR workflow — branching, commits, and review process for every feature or fix"
+alwaysApply: false
+---
+
+For every feature, fix, or meaningful change:
+1. Branch off `preview` (not `main`) — one branch per feature/fix, named descriptively (`feat/…`, `fix/…`).
+2. Commit at logical checkpoints, not one giant commit — clear, conventional commit messages (`feat:`, `fix:`, `refactor:`, `test:`).
+3. Open a PR against `preview`, never `main` directly.
+4. Get it reviewed — via CodeRabbit if configured, otherwise do a self-review pass explicitly checking: does this match the plan, did tests actually run, any security items from the security rule, any flow-breaking side effects.
+5. Only merge to `main` from `preview` as a separate, deliberate release step — not part of routine feature work.
+
+Never skip the branch/PR step "just this once" for a small change — small changes are exactly where unreviewed regressions slip in.

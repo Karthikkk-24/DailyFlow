@@ -1,0 +1,327 @@
+"use client";
+
+import Link from "next/link";
+import { useMemo, useState } from "react";
+import {
+  Check,
+  Flame,
+  Plus,
+  Target,
+  Timer,
+} from "lucide-react";
+import { useDayFlow } from "@/context/dayflow-provider";
+import {
+  Card,
+  EmptyState,
+  PageHeader,
+  ProgressRing,
+  Badge,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  formatDisplayDate,
+  greetingForHour,
+  todayKey,
+  cn,
+} from "@/lib/utils";
+import { parseISO } from "date-fns";
+import { recomputeTodaySnapshot, computeStreak, goalProgress, isHabitCompletedOn, habitsDueToday } from "@/lib/analytics/score";
+import { Modal } from "@/components/ui/modal";
+import { FieldError, Input, Label } from "@/components/ui/input";
+import { TASK_CATEGORIES, type TaskPriority } from "@/types";
+
+export default function TodayPage() {
+  const { state, dispatch } = useDayFlow();
+  const [open, setOpen] = useState(false);
+  const [title, setTitle] = useState("");
+  const [error, setError] = useState("");
+
+  const today = todayKey();
+  const snap = useMemo(() => recomputeTodaySnapshot(state), [state]);
+  const greeting = greetingForHour(new Date().getHours());
+
+  const todayTasks = state.tasks
+    .filter(
+      (t) =>
+        t.status === "today" ||
+        t.status === "in_progress" ||
+        (t.dueDate === today && t.status !== "done") ||
+        (t.status === "done" &&
+          !!t.completedAt &&
+          todayKey(parseISO(t.completedAt)) === today),
+    )
+    .sort((a, b) => {
+      const rank = { in_progress: 0, today: 1, done: 2, backlog: 3 };
+      return rank[a.status] - rank[b.status] || a.order - b.order;
+    });
+
+  const blocks = state.scheduleBlocks
+    .filter((b) => b.date === today)
+    .sort((a, b) => a.startTime.localeCompare(b.startTime));
+
+  const dueHabits = habitsDueToday(state.habits);
+  const activeGoals = state.goals.filter((g) => g.status === "active").slice(0, 2);
+
+  function addTask() {
+    if (!title.trim()) {
+      setError("Title is required.");
+      return;
+    }
+    dispatch({
+      type: "ADD_TASK",
+      task: {
+        title: title.trim(),
+        status: "today",
+        priority: "medium" as TaskPriority,
+        category: TASK_CATEGORIES[0],
+        dueDate: today,
+      },
+    });
+    setTitle("");
+    setError("");
+    setOpen(false);
+  }
+
+  return (
+    <div>
+      <PageHeader
+        title={`${greeting}, ${state.profile.name}`}
+        description={formatDisplayDate(new Date())}
+        actions={
+          <>
+            <Button variant="secondary" onClick={() => setOpen(true)}>
+              <Plus className="h-4 w-4" /> Task
+            </Button>
+            <Link href="/focus">
+              <Button>
+                <Timer className="h-4 w-4" /> Focus
+              </Button>
+            </Link>
+          </>
+        }
+      />
+
+      {state.profile.primaryGoal && (
+        <p className="mb-6 text-sm text-muted-foreground">
+          Focus: <span className="text-foreground">{state.profile.primaryGoal}</span>
+        </p>
+      )}
+
+      <div className="grid gap-4 lg:grid-cols-[220px_1fr]">
+        <Card className="flex flex-col items-center justify-center gap-2">
+          <ProgressRing value={snap.todayScore} label="Today" />
+          <p className="text-center text-xs text-muted-foreground">
+            Tasks {Math.round((snap.tasksCompleted / Math.max(1, todayTasks.filter(t=>t.status!=='done').length + snap.tasksCompleted)) * 100) || 0}% · Habits{" "}
+            {snap.habitsTotal
+              ? Math.round((snap.habitsCompleted / snap.habitsTotal) * 100)
+              : 0}
+            % · Focus {snap.focusMinutes}m
+          </p>
+        </Card>
+
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Card>
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">Tasks done</p>
+            <p className="mt-2 text-3xl font-semibold tabular-nums">{snap.tasksCompleted}</p>
+          </Card>
+          <Card>
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">Habits</p>
+            <p className="mt-2 text-3xl font-semibold tabular-nums">
+              {snap.habitsCompleted}/{snap.habitsTotal || 0}
+            </p>
+          </Card>
+          <Card>
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">Focus</p>
+            <p className="mt-2 text-3xl font-semibold tabular-nums">{snap.focusMinutes}m</p>
+          </Card>
+        </div>
+      </div>
+
+      <section className="mt-8">
+        <h2 className="mb-3 font-display text-xl">Today&apos;s tasks</h2>
+        {todayTasks.length === 0 ? (
+          <EmptyState
+            title="Nothing on your plate"
+            description="Add a task or move something from backlog into Today."
+            action={
+              <Button onClick={() => setOpen(true)}>
+                <Plus className="h-4 w-4" /> Add task
+              </Button>
+            }
+          />
+        ) : (
+          <ul className="space-y-2">
+            {todayTasks.map((task) => (
+              <li
+                key={task.id}
+                className="df-card flex items-center gap-3 p-3"
+              >
+                <button
+                  type="button"
+                  aria-label={task.status === "done" ? "Mark incomplete" : "Complete"}
+                  className={cn(
+                    "flex h-6 w-6 items-center justify-center rounded-full border",
+                    task.status === "done"
+                      ? "border-success bg-success text-white"
+                      : "border-border hover:border-primary",
+                  )}
+                  onClick={() =>
+                    dispatch({
+                      type: "MOVE_TASK",
+                      id: task.id,
+                      status: task.status === "done" ? "today" : "done",
+                    })
+                  }
+                >
+                  {task.status === "done" && <Check className="h-3.5 w-3.5" />}
+                </button>
+                <div className="min-w-0 flex-1">
+                  <p
+                    className={cn(
+                      "truncate font-medium",
+                      task.status === "done" && "text-muted-foreground line-through",
+                    )}
+                  >
+                    {task.title}
+                  </p>
+                  <div className="mt-1 flex flex-wrap gap-1.5">
+                    <Badge tone={task.priority}>{task.priority}</Badge>
+                    <Badge>{task.category}</Badge>
+                    {task.dueTime && (
+                      <span className="text-xs text-muted-foreground">{task.dueTime}</span>
+                    )}
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section className="mt-8 grid gap-6 lg:grid-cols-2">
+        <div>
+          <h2 className="mb-3 font-display text-xl">Schedule</h2>
+          {blocks.length === 0 ? (
+            <EmptyState
+              title="No blocks today"
+              description="Plan your day in the weekly planner."
+              action={
+                <Link href="/planner">
+                  <Button variant="secondary">Open planner</Button>
+                </Link>
+              }
+            />
+          ) : (
+            <ol className="relative space-y-3 border-l border-border pl-4">
+              {blocks.map((b) => (
+                <li key={b.id} className="relative">
+                  <span className="absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full bg-primary" />
+                  <div className="df-card p-3">
+                    <p className="text-xs text-muted-foreground">
+                      {b.startTime} – {b.endTime}
+                    </p>
+                    <p className="font-medium">{b.title}</p>
+                    <Badge className="mt-1">{b.category.replace("_", " ")}</Badge>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          )}
+        </div>
+
+        <div className="space-y-6">
+          <div>
+            <h2 className="mb-3 font-display text-xl">Habit streaks</h2>
+            {dueHabits.length === 0 ? (
+              <EmptyState title="No habits yet" action={<Link href="/habits"><Button variant="secondary">Add habits</Button></Link>} />
+            ) : (
+              <div className="flex gap-3 overflow-x-auto pb-1">
+                {dueHabits.map((h) => {
+                  const { current } = computeStreak(h, state.habitLogs);
+                  const done = isHabitCompletedOn(h.id, today, state.habitLogs);
+                  return (
+                    <button
+                      key={h.id}
+                      type="button"
+                      onClick={() =>
+                        dispatch({
+                          type: "TOGGLE_HABIT_DAY",
+                          habitId: h.id,
+                          date: today,
+                        })
+                      }
+                      className={cn(
+                        "df-card min-w-[140px] p-3 text-left transition",
+                        done && "ring-2 ring-primary/40",
+                      )}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Flame className="h-4 w-4 text-accent" style={{ color: h.color }} />
+                        <span className="truncate text-sm font-medium">{h.name}</span>
+                      </div>
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        {current} day streak · {done ? "Done" : "Tap to log"}
+                      </p>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          <div>
+            <h2 className="mb-3 font-display text-xl">Goal progress</h2>
+            {activeGoals.length === 0 ? (
+              <EmptyState title="No active goals" action={<Link href="/goals"><Button variant="secondary">Set a goal</Button></Link>} />
+            ) : (
+              <div className="space-y-3">
+                {activeGoals.map((g) => {
+                  const pct = goalProgress(g.milestones);
+                  return (
+                    <Link key={g.id} href={`/goals/${g.id}`} className="df-card block p-4 hover:bg-muted/40">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <Target className="h-4 w-4 text-primary" />
+                          <span className="font-medium">{g.title}</span>
+                        </div>
+                        <span className="text-sm tabular-nums text-muted-foreground">{pct}%</span>
+                      </div>
+                      <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted">
+                        <div
+                          className="h-full rounded-full bg-primary transition-all"
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+
+      <Modal open={open} onClose={() => setOpen(false)} title="Add task for today">
+        <div className="space-y-3">
+          <div>
+            <Label htmlFor="quick-title">Title</Label>
+            <Input
+              id="quick-title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="What needs doing?"
+              maxLength={200}
+            />
+            <FieldError>{error}</FieldError>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="secondary" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={addTask}>Add task</Button>
+          </div>
+        </div>
+      </Modal>
+    </div>
+  );
+}

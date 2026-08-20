@@ -1,0 +1,8 @@
+---
+description: "How to summarize work and report changes"
+alwaysApply: true
+---
+
+- End every response with a **short, plain-language summary** of what changed — no jargon dump, a few sentences max.
+- Always list every file created, modified, or deleted in that response, as a simple list.
+- When a multi-step task finishes, give one consolidated list of every file touched across the whole task, not just the last step.

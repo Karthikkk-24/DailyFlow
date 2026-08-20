@@ -1,0 +1,12 @@
+---
+description: "Dependency management — applies before adding, updating, or removing an npm package"
+alwaysApply: false
+---
+
+Before adding a new package:
+- Check it's actively maintained (recent commits/releases) and reasonably popular — avoid abandoned or single-maintainer-with-no-activity packages for anything load-bearing.
+- Check the project doesn't already have something that does this job — don't add a second date library, a second HTTP client, a second form library, etc.
+- Check its size/transitive dependency count is reasonable for what it's solving — don't pull in a heavy package for a one-line utility.
+- Prefer well-known, ecosystem-standard choices over niche ones, all else equal.
+
+When removing/updating: check nothing else in the codebase depends on the old behavior before bumping a major version.

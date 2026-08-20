@@ -1,0 +1,11 @@
+---
+description: "Mobile-specific conventions for React Native/Expo projects"
+alwaysApply: false
+globs: ["**/app/**/*.tsx", "**/screens/**/*.tsx", "app.json", "app.config.*"]
+---
+
+- Handle offline/network-loss explicitly on every screen that fetches data — don't assume the network call always succeeds; show a real state (retry, cached data, or clear error), not a blank screen or infinite spinner.
+- Keep platform-specific code isolated (`.ios.tsx`/`.android.tsx` or clear `Platform.OS` branches) rather than scattering inline platform checks through shared components.
+- Auth tokens and sensitive data go in secure storage (`expo-secure-store` or equivalent Keychain/Keystore-backed storage) — never plain `AsyncStorage` for anything sensitive.
+- Navigation state and deep links should be validated before acting on them — don't trust a deep link's params without checking shape/auth.
+- Before shipping a change, consider app store review implications (permissions requested, background behavior, any API usage Apple/Google flag) if the change touches native capabilities.

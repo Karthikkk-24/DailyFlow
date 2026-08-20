@@ -1,0 +1,9 @@
+---
+description: "When to use installed MCPs and Cursor tools instead of guessing or doing it manually"
+alwaysApply: false
+---
+
+- For anything involving live database schema, data, or migrations: use the Supabase/Neon MCP to check actual state rather than assuming from memory of the code.
+- For GitHub actions (issues, PRs, branches): use the GitHub MCP/tools rather than instructing me to run manual git commands, where available.
+- Before answering questions about "does X exist in this project" or "what does this table look like," check via the relevant MCP/tool instead of guessing from partial context.
+- If a task would clearly benefit from an installed MCP but it isn't being used, say so explicitly rather than working around it manually.

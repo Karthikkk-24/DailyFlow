@@ -1,0 +1,10 @@
+---
+description: "Environment and config conventions — how env vars and per-environment settings should be structured"
+alwaysApply: false
+---
+
+- One `.env.example` file checked into the repo listing every required variable (no real values) — keep it in sync whenever a new env var is added.
+- Consistent naming across environments: same variable name in dev/staging/prod, only the value differs.
+- Group related config logically (e.g. `DB_*`, `AUTH_*`, `PAYMENT_*` prefixes) rather than a flat unstructured list.
+- Never commit real secrets, even temporarily — if a secret was accidentally added to a tracked file, flag it immediately rather than just removing it (it may need rotation).
+- Config that differs by environment (feature flags, rate limits, timeouts) should be read from env/config, never hardcoded with an inline "change this for prod" comment.

@@ -1,0 +1,21 @@
+---
+description: "Security checklist — applies whenever writing or reviewing code that handles input, auth, data, or network calls"
+alwaysApply: false
+---
+
+Check every change against these, not just at "security review" time:
+
+**OWASP Top 10 basics**: injection (SQL/NoSQL/GraphQL), broken auth/session handling, sensitive data exposure, broken access control, security misconfiguration, XSS, insecure deserialization, using components with known vulnerabilities, insufficient logging.
+
+**AI-generated-code-specific risks** (these show up often in LLM output — check for them explicitly):
+- Hardcoded secrets, API keys, or credentials instead of env vars
+- Missing input validation/sanitization on anything user-supplied
+- Overly permissive CORS, RLS policies, or IAM/role rules
+- SQL/query building via string concatenation instead of parameterized queries or the ORM's safe methods
+- Missing rate limiting on public endpoints
+- Trusting client-side data (prices, roles, IDs) without server-side re-validation
+
+**Web-specific**: CSRF protection, secure cookie flags, CSP headers, dependency audit (`npm audit` / Snyk) before merging.
+**Mobile-specific** (React Native/Expo): secure storage for tokens (not AsyncStorage in plaintext), certificate pinning where relevant, deep-link validation, no secrets bundled into the client build.
+
+If a vulnerability class doesn't clearly apply to the file being touched, skip it rather than padding the review — don't manufacture findings.

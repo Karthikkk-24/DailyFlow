@@ -1,0 +1,11 @@
+---
+description: "Stack conventions for Next.js frontend, NestJS backend, GraphQL, and Postgres (Supabase/Neon)"
+globs: ["**/*.ts", "**/*.tsx", "**/*.graphql", "**/prisma/**", "**/schema.sql"]
+alwaysApply: false
+---
+
+- **Frontend**: Next.js (App Router) + TypeScript. Use well-maintained, widely-adopted libraries over obscure ones — prefer the ecosystem-standard choice unless there's a specific reason not to.
+- **Backend**: NestJS + TypeScript, modular structure (module/controller/service/DTO per domain).
+- **API layer**: GraphQL — use code-first schema generation where the ORM supports it; validate all inputs at the resolver boundary, don't rely on the ORM layer alone.
+- **Database**: Postgres via Supabase or Neon depending on the project — use the project's existing ORM consistently (don't mix raw queries and ORM calls for the same table without a reason). Every schema change goes through a migration file, never a manual/ad-hoc change against the live DB.
+- Keep environment-specific config (connection strings, keys) in env vars, never inline.

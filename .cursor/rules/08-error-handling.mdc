@@ -1,0 +1,10 @@
+---
+description: "Error handling standards — applies whenever writing code that can fail (I/O, network, DB, external calls)"
+alwaysApply: false
+---
+
+- No silent `catch {}` / swallowed errors — every catch either handles the error meaningfully, re-throws, or logs with enough context to debug later.
+- Use a consistent error shape across the API (e.g. `{ code, message, details }`) — don't let each endpoint invent its own format.
+- Log internally with full detail (stack, context, request id); return the user a safe, non-leaky message — never expose stack traces, internal paths, or raw DB errors to the client.
+- Distinguish expected errors (validation, not-found, unauthorized) from unexpected ones (crashes, bugs) — expected ones shouldn't be logged as critical/alerting errors.
+- Every external call (DB, third-party API, network) needs a defined failure path — timeout, retry if appropriate, and a clear fallback or error surface. Don't assume the happy path.
