@@ -198,7 +198,8 @@ export default function FocusPage() {
     <div
       className={cn(
         "mx-auto flex min-h-screen max-w-lg flex-col px-4 py-8",
-        distractionFree && "bg-background",
+        distractionFree &&
+          "fixed inset-0 z-[100] max-w-none bg-background px-4 py-8",
       )}
     >
       <div className="mb-6 flex items-center justify-between">
@@ -208,15 +209,23 @@ export default function FocusPage() {
               ← Back
             </Link>
           )}
-          <h1 className="font-display text-3xl tracking-tight">Focus</h1>
+          <h1 className="font-display text-3xl tracking-tight">
+            {distractionFree ? "Focus mode" : "Focus"}
+          </h1>
         </div>
         <Button
           variant="ghost"
           size="sm"
           onClick={() => setDistractionFree((v) => !v)}
-          aria-label={distractionFree ? "Exit distraction-free" : "Distraction-free"}
+          aria-label={distractionFree ? "Exit distraction-free" : "Enter distraction-free"}
         >
-          {distractionFree ? <X className="h-4 w-4" /> : "Distraction-free"}
+          {distractionFree ? (
+            <>
+              <X className="h-4 w-4" /> Exit
+            </>
+          ) : (
+            "Distraction-free"
+          )}
         </Button>
       </div>
 
