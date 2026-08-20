@@ -4,11 +4,15 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { format, subDays } from "date-fns";
-import { ArrowLeft, Trash2 } from "lucide-react";
+import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
 import { useDayFlow } from "@/context/dayflow-provider";
 import { Badge, Card, EmptyState, PageHeader, ProgressRing } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/modal";
+import {
+  HabitFormModal,
+  type HabitFormValues,
+} from "@/components/habits/habit-form-modal";
 import { cn, todayKey } from "@/lib/utils";
 import {
   computeStreak,
@@ -22,6 +26,7 @@ export default function HabitDetailPage() {
   const router = useRouter();
   const { state, dispatch } = useDayFlow();
   const [confirm, setConfirm] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
 
   const habit = state.habits.find((h) => h.id === params.id);
 
@@ -58,6 +63,10 @@ export default function HabitDetailPage() {
   const today = todayKey();
   const doneToday = isHabitCompletedOn(habit.id, today, state.habitLogs);
 
+  function saveEdit(values: HabitFormValues) {
+    dispatch({ type: "UPDATE_HABIT", id: habit!.id, patch: values });
+  }
+
   return (
     <div>
       <Link
@@ -82,6 +91,9 @@ export default function HabitDetailPage() {
               }
             >
               {doneToday ? "Undo today" : "Complete today"}
+            </Button>
+            <Button variant="secondary" onClick={() => setEditOpen(true)}>
+              <Pencil className="h-4 w-4" /> Edit
             </Button>
             <Button variant="danger" onClick={() => setConfirm(true)}>
               <Trash2 className="h-4 w-4" />
@@ -128,6 +140,13 @@ export default function HabitDetailPage() {
           </p>
         </div>
       </section>
+
+      <HabitFormModal
+        open={editOpen}
+        onClose={() => setEditOpen(false)}
+        habit={habit}
+        onSave={saveEdit}
+      />
 
       <ConfirmDialog
         open={confirm}
