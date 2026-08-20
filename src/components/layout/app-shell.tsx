@@ -40,7 +40,7 @@ const MOBILE_PRIMARY = [
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { hydrated, state, saveError } = useDayFlow();
+  const { hydrated, state, storageError } = useDayFlow();
   const [open, setOpen] = useState(false);
   const hideChrome =
     pathname.startsWith("/onboarding") || pathname.startsWith("/focus");
@@ -146,9 +146,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         )}
 
-        {saveError && (
+        {storageError && (
           <div className="border-b border-danger/30 bg-danger/10 px-4 py-2 text-sm text-danger">
-            {saveError}
+            {storageError}
           </div>
         )}
 

@@ -91,6 +91,30 @@ describe("recomputeTodaySnapshot", () => {
     const snap = recomputeTodaySnapshot(empty);
     expect(snap.todayScore).toBe(0);
   });
+it("ignores historical done tasks when scoring today", () => {
+    const state = createSeededState();
+    const base = recomputeTodaySnapshot(state);
+    const withOldDone: AppState = {
+      ...state,
+      tasks: [
+        ...state.tasks,
+        ...Array.from({ length: 40 }, (_, i) => ({
+          id: `old-${i}`,
+          title: `Old ${i}`,
+          status: "done" as const,
+          priority: "low" as const,
+          category: "Work",
+          completedAt: "2026-01-01T12:00:00.000Z",
+          createdAt: "2026-01-01T10:00:00.000Z",
+          updatedAt: "2026-01-01T12:00:00.000Z",
+          order: i,
+        })),
+      ],
+    };
+    const next = recomputeTodaySnapshot(withOldDone);
+    expect(next.todayScore).toBe(base.todayScore);
+    expect(next.tasksCompleted).toBe(base.tasksCompleted);
+  });
 });
 
 describe("parseImportJson", () => {

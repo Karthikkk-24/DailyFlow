@@ -24,6 +24,7 @@ import {
   todayKey,
   cn,
 } from "@/lib/utils";
+import { parseISO } from "date-fns";
 import { recomputeTodaySnapshot, computeStreak, goalProgress, isHabitCompletedOn, habitsDueToday } from "@/lib/analytics/score";
 import { Modal } from "@/components/ui/modal";
 import { FieldError, Input, Label } from "@/components/ui/input";
@@ -45,7 +46,9 @@ export default function TodayPage() {
         t.status === "today" ||
         t.status === "in_progress" ||
         (t.dueDate === today && t.status !== "done") ||
-        (t.status === "done" && t.completedAt?.startsWith(today)),
+        (t.status === "done" &&
+          !!t.completedAt &&
+          todayKey(parseISO(t.completedAt)) === today),
     )
     .sort((a, b) => {
       const rank = { in_progress: 0, today: 1, done: 2, backlog: 3 };

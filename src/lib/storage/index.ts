@@ -8,10 +8,12 @@ import { nowIso } from "@/lib/utils";
 
 export const STORAGE_KEY = "dayflow:v1";
 export const BACKUP_KEY = "dayflow:v1:backup";
+export const CORRUPT_KEY = "dayflow:v1:corrupt";
 
-export type StorageResult<T> =
-  | { data: T; error: null }
-  | { data: null; error: string };
+export type StorageResult<T> = {
+  data: T | null;
+  error: string | null;
+};
 
 function migrate(raw: unknown): AppState {
   const parsed = appStateSchema.safeParse(raw);
@@ -36,8 +38,6 @@ export function loadState(): StorageResult<AppState> {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) {
       const seeded = createSeededState();
-      // First visit: keep onboarding incomplete so wizard can run,
-      // but still seed rich demo data for skip path.
       const firstRun: AppState = {
         ...seeded,
         meta: { ...seeded.meta, onboardingCompleted: false },
@@ -53,10 +53,16 @@ export function loadState(): StorageResult<AppState> {
     const message =
       err instanceof Error ? err.message : "Failed to load saved data";
     try {
-      // Recover with seed data; surface the original load error separately if needed
-      console.warn("[DayFlow] load failed, restoring seed:", message);
+      const corrupt = window.localStorage.getItem(STORAGE_KEY);
+      if (corrupt) {
+        window.localStorage.setItem(CORRUPT_KEY, corrupt);
+      }
       const seeded = createSeededState();
-      return { data: seeded, error: null };
+      saveState(seeded);
+      return {
+        data: seeded,
+        error: `Saved data was unreadable and was reset to demo data (${message}). A copy was kept under ${CORRUPT_KEY}.`,
+      };
     } catch {
       return { data: null, error: message };
     }

@@ -101,11 +101,16 @@ export function dayFlowReducer(
     }
 
     case "UPDATE_TASK": {
-      const tasks = state.tasks.map((t) =>
-        t.id === action.id
-          ? { ...t, ...action.patch, updatedAt: nowIso() }
-          : t,
-      );
+      const tasks = state.tasks.map((t) => {
+        if (t.id !== action.id) return t;
+        const next: Task = { ...t, ...action.patch, updatedAt: nowIso() };
+        if (next.status !== "done") {
+          next.completedAt = undefined;
+        } else if (!next.completedAt) {
+          next.completedAt = nowIso();
+        }
+        return next;
+      });
       return withSnapshot({ ...state, tasks });
     }
 
@@ -224,11 +229,13 @@ export function dayFlowReducer(
         });
         const allDone =
           milestones.length > 0 && milestones.every((m) => m.completed);
-        return {
-          ...g,
-          milestones,
-          status: allDone && g.status === "active" ? "completed" : g.status,
-        };
+        let status = g.status;
+        if (allDone && g.status === "active") {
+          status = "completed";
+        } else if (!allDone && g.status === "completed") {
+          status = "active";
+        }
+        return { ...g, milestones, status };
       });
       return withSnapshot({ ...state, goals });
     }

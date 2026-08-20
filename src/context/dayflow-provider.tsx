@@ -22,7 +22,7 @@ interface DayFlowContextValue {
   state: AppState;
   dispatch: (action: DayFlowAction) => void;
   hydrated: boolean;
-  saveError: string | null;
+  storageError: string | null;
 }
 
 const DayFlowContext = createContext<DayFlowContextValue | null>(null);
@@ -42,7 +42,7 @@ export function DayFlowProvider({ children }: { children: ReactNode }) {
     () => createSeededState(),
   );
   const [hydrated, setHydrated] = useReducer(() => true, false);
-  const [saveError, setSaveError] = useReducer(
+  const [storageError, setStorageError] = useReducer(
     (_: string | null, next: string | null) => next,
     null as string | null,
   );
@@ -55,6 +55,9 @@ export function DayFlowProvider({ children }: { children: ReactNode }) {
       skipSave.current = true;
       dispatch({ type: "HYDRATE", state: result.data });
       applyTheme(result.data.meta.theme);
+    }
+    if (result.error) {
+      setStorageError(result.error);
     }
     setHydrated();
   }, []);
@@ -73,7 +76,7 @@ export function DayFlowProvider({ children }: { children: ReactNode }) {
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => {
       const result = saveState(state);
-      setSaveError(result.error);
+      setStorageError(result.error);
     }, 300);
     return () => {
       if (saveTimer.current) clearTimeout(saveTimer.current);
@@ -90,8 +93,8 @@ export function DayFlowProvider({ children }: { children: ReactNode }) {
   }, [state.meta.theme]);
 
   const value = useMemo(
-    () => ({ state, dispatch, hydrated, saveError }),
-    [state, hydrated, saveError],
+    () => ({ state, dispatch, hydrated, storageError }),
+    [state, hydrated, storageError],
   );
 
   return (

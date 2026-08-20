@@ -142,11 +142,18 @@ export function recomputeTodaySnapshot(state: AppState, date = new Date()) {
   ).length;
 
   const todayTasks = state.tasks.filter(
-    (t) =>
-      t.status === "today" ||
-      t.status === "in_progress" ||
-      t.status === "done" ||
-      t.dueDate === key,
+    (t) => {
+      const completedToday =
+        t.status === "done" &&
+        !!t.completedAt &&
+        todayKey(parseISO(t.completedAt)) === key;
+      if (completedToday) return true;
+      if (t.status === "today" || t.status === "in_progress") return true;
+      if (t.dueDate === key && t.status !== "done" && t.status !== "backlog") {
+        return true;
+      }
+      return false;
+    },
   );
   const tasksCompleted = state.tasks.filter(
     (t) =>
@@ -154,10 +161,7 @@ export function recomputeTodaySnapshot(state: AppState, date = new Date()) {
       t.completedAt &&
       todayKey(parseISO(t.completedAt)) === key,
   ).length;
-  const plannedTasks = Math.max(
-    todayTasks.filter((t) => t.status !== "backlog").length,
-    tasksCompleted,
-  );
+  const plannedTasks = Math.max(todayTasks.length, tasksCompleted);
 
   const focusMinutes = state.focusSessions
     .filter(
