@@ -1,0 +1,11 @@
+---
+description: "Hard boundaries — no destructive git or database actions without explicit sign-off"
+alwaysApply: true
+---
+
+These are boundaries, not preferences. Never do the following without asking first and getting an explicit yes:
+
+- No `git push --force`, no rewriting history, no deleting branches, no direct commits/pushes to `main`.
+- No `DROP`, `DELETE`, `TRUNCATE`, or destructive `ALTER` on any database, and no data-losing migration, even in a "safe" environment — ask first, every time.
+- No editing of `.env`, secrets, CI/CD configs, or GitHub repo settings unless the task explicitly requires it and I've confirmed.
+- If a task seems to require any of the above to succeed, stop and explain why instead of finding a workaround.

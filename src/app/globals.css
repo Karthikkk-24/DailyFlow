@@ -1,0 +1,110 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f6f4ef;
+  --foreground: #1c1917;
+  --card: #ffffff;
+  --card-foreground: #1c1917;
+  --muted: #ebe7df;
+  --muted-foreground: #78716c;
+  --border: #e7e2d8;
+  --primary: #0f766e;
+  --primary-foreground: #f0fdfa;
+  --accent: #d97706;
+  --accent-foreground: #fffbeb;
+  --danger: #dc2626;
+  --danger-foreground: #fef2f2;
+  --ring: #0d9488;
+  --sidebar: #faf8f4;
+  --sidebar-foreground: #44403c;
+  --success: #16a34a;
+  --shadow: 0 1px 2px rgb(28 25 23 / 0.04), 0 8px 24px rgb(28 25 23 / 0.06);
+  --radius: 14px;
+}
+
+.dark {
+  --background: #121110;
+  --foreground: #f5f5f4;
+  --card: #1c1917;
+  --card-foreground: #f5f5f4;
+  --muted: #292524;
+  --muted-foreground: #a8a29e;
+  --border: #292524;
+  --primary: #2dd4bf;
+  --primary-foreground: #042f2e;
+  --accent: #fbbf24;
+  --accent-foreground: #422006;
+  --danger: #f87171;
+  --danger-foreground: #450a0a;
+  --ring: #2dd4bf;
+  --sidebar: #0c0a09;
+  --sidebar-foreground: #d6d3d1;
+  --success: #4ade80;
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px rgb(0 0 0 / 0.35);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-danger: var(--danger);
+  --color-danger-foreground: var(--danger-foreground);
+  --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-success: var(--success);
+  --font-sans: var(--font-sans);
+  --font-display: var(--font-display);
+  --radius-xl: var(--radius);
+}
+
+* {
+  border-color: var(--border);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  min-height: 100%;
+}
+
+::selection {
+  background: color-mix(in oklab, var(--primary) 28%, transparent);
+}
+
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.font-display {
+  font-family: var(--font-display), ui-serif, Georgia, serif;
+}
+
+.df-card {
+  background: var(--card);
+  color: var(--card-foreground);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.df-surface {
+  background:
+    radial-gradient(1200px 600px at 10% -10%, color-mix(in oklab, var(--primary) 12%, transparent), transparent 55%),
+    radial-gradient(900px 500px at 100% 0%, color-mix(in oklab, var(--accent) 10%, transparent), transparent 50%),
+    var(--background);
+}

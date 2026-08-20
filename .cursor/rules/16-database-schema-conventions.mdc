@@ -1,0 +1,12 @@
+---
+description: "Database schema conventions — naming, required columns, delete strategy, keys and indexes"
+alwaysApply: false
+globs: ["**/prisma/**", "**/migrations/**", "**/schema.sql"]
+---
+
+- Table names plural, snake_case (or match whatever convention the project already uses — check first, stay consistent within a project).
+- Every table gets `created_at` and `updated_at` by default unless there's a specific reason not to.
+- Default to soft-delete (`deleted_at` nullable column) for user-facing data; only hard-delete for genuinely disposable data (e.g. expired tokens, logs) — and hard-delete always requires the explicit confirmation from the safety-guardrails rule.
+- Every foreign key gets an index; every column used in a `WHERE`/`JOIN`/`ORDER BY` on a large table should be checked for an index.
+- Foreign keys should have an explicit `ON DELETE` behavior (`CASCADE`, `RESTRICT`, `SET NULL`) chosen deliberately, not left at the default.
+- Every schema change goes through a migration file — never a manual edit against a live database (ties to the safety-guardrails rule).

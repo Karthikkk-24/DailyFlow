@@ -1,0 +1,10 @@
+---
+description: "Feature flag conventions — when to use them, naming, and cleanup"
+alwaysApply: false
+---
+
+- Use a feature flag when shipping an incomplete or risky feature to `main` behind a toggle, instead of keeping a long-lived feature branch — flags default to **off** in production until explicitly turned on.
+- Naming: consistent prefix (e.g. `ff_` or `feature.`) plus a clear, specific name (`ff_new_checkout_flow`, not `ff_test1`).
+- Every flag added should note (in the PR description or a comment at the flag definition) why it exists and roughly when it's expected to be removed.
+- Once a flag is fully rolled out and stable, remove the flag and the dead code path in a dedicated follow-up PR — don't let old flags accumulate indefinitely.
+- Don't wrap destructive or data-migrating logic in a flag as the only safety net — that still goes through the safety-guardrails confirmation step regardless of flag state.

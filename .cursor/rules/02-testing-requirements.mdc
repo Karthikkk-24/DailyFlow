@@ -1,0 +1,17 @@
+---
+description: "Testing standards — what to test and how thoroughly, applies when writing or reviewing code, adding features, or fixing bugs"
+alwaysApply: false
+---
+
+## When shipping new code or a fix
+- Write unit tests for the new logic and integration tests for the flow it belongs to.
+- Before marking anything done, run the full existing test suite — not just the tests for the new code — to confirm nothing else broke.
+- Explicitly check: does this change affect any other feature, flow, or shared function? If touching shared code (utils, hooks, shared services, middleware), find and check every caller.
+
+## Full "hardcore" regression pass
+Reserve this for milestones, not every commit — otherwise it becomes too slow/expensive to actually run:
+- Trigger it explicitly ("run full regression") before a release or before merging into `preview`.
+- Covers: every existing user flow, edge cases, error states, and auth/permission boundaries — not just the happy path.
+
+## Standard for "tested"
+A feature isn't done until: unit tests pass, the specific flow is integration-tested, the broader suite is green, and edge cases (empty input, invalid auth, network failure, concurrent access where relevant) are covered.

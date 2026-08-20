@@ -1,0 +1,10 @@
+---
+description: "Observability — structured logging, alerting thresholds, and request tracing"
+alwaysApply: false
+---
+
+- Use structured logging (key-value/JSON, not free-text strings) so logs are searchable/filterable in production.
+- Distinguish log levels meaningfully: `debug` for dev-time detail, `info` for normal operation events, `warn` for recoverable issues, `error` for things that need attention — don't default everything to one level.
+- Propagate a request/correlation ID through a request's full lifecycle (API → service → DB call) so a single request can be traced across logs.
+- Only wire up alerting for things that need a human to act — not every error. Expected errors (validation, not-found) log, they don't page anyone.
+- Never log secrets, tokens, passwords, or full payment/PII details — log identifiers (user id, request id), not the sensitive payload itself.

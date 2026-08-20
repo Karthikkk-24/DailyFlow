@@ -1,0 +1,10 @@
+---
+description: "Performance basics — applies to backend queries, API endpoints, and data-heavy frontend code"
+alwaysApply: false
+---
+
+- Watch for N+1 queries when using an ORM — use eager loading / batched queries / GraphQL dataloaders instead of looping with a query per iteration.
+- Any endpoint or resolver returning a list must support pagination (cursor or offset) — never return an unbounded list "for now."
+- In GraphQL, resolve only the fields actually requested — don't over-fetch related data by default.
+- Add caching or memoization only where there's a real, identified cost (expensive computation, repeated identical DB calls) — not speculatively.
+- For anything DB-heavy, check that the relevant columns are indexed before assuming a query is "slow because Postgres."

@@ -1,0 +1,11 @@
+---
+description: "Accessibility basics — applies to any user-facing frontend UI code"
+alwaysApply: false
+globs: ["**/*.tsx", "**/*.jsx"]
+---
+
+- Use semantic HTML elements (`button`, `nav`, `label`, headings in order) instead of generic `div`/`span` with click handlers.
+- Every interactive element must be keyboard-navigable and focusable — don't rely on hover/click-only interactions.
+- Images need meaningful `alt` text (or explicitly empty `alt=""` for purely decorative ones).
+- Form inputs need associated labels, not just placeholder text.
+- Check color contrast for text against its background meets basic readability — don't rely on color alone to convey state (errors, success, required fields).

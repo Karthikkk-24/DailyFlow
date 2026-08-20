@@ -1,0 +1,16 @@
+---
+description: "Self-review checklist — run through before opening a PR or asking for review"
+alwaysApply: false
+---
+
+Before opening a PR, go through this explicitly (don't just say "looks good"):
+
+- Does the change match the plan agreed on, or did scope drift during implementation?
+- Did tests actually run (not just written) — unit, integration, and full suite if the change touches shared code?
+- Any security items relevant to this change (see security-standards) — checked, not skipped?
+- Any other feature/flow that could break because of this change — checked the callers/consumers of anything touched?
+- Any leftover debug code, commented-out blocks, console logs, or TODOs that shouldn't ship?
+- Does the diff match the commit messages — no unrelated changes bundled in?
+- Is the PR description accurate: what changed, why, how it was tested, anything the human reviewer should pay special attention to?
+
+If any answer is "not sure," that's the signal to check before opening the PR, not after.
