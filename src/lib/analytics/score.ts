@@ -211,3 +211,25 @@ export function upsertTodaySnapshot(state: AppState): AppState {
     ),
   };
 }
+
+/** Rebuild daily snapshots from entities for the last N days (inclusive of today). */
+export function rebuildHistorySnapshots(
+  state: AppState,
+  days = 30,
+  asOf = new Date(),
+): AppState {
+  const snaps = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const day = subDays(asOf, i);
+    // Evaluate past days at end-of-day so schedule blocks count as completed
+    const at = new Date(day);
+    if (i > 0) {
+      at.setHours(23, 59, 59, 999);
+    }
+    snaps.push(recomputeTodaySnapshot(state, at));
+  }
+  return {
+    ...state,
+    analyticsSnapshots: snaps.sort((a, b) => a.date.localeCompare(b.date)),
+  };
+}

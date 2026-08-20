@@ -11,7 +11,7 @@ import type {
 } from "@/types";
 import { createId, nowIso, todayKey, weekDates, timeToMinutes, minutesToTime } from "@/lib/utils";
 import { format, subDays, addDays, getDay } from "date-fns";
-import { recomputeTodaySnapshot } from "@/lib/analytics/score";
+import { rebuildHistorySnapshots } from "@/lib/analytics/score";
 
 function deepWorkBlocksForWorkingHours(profile: UserProfile): ScheduleBlock[] {
   const startMin = timeToMinutes(profile.workingHours.start);
@@ -379,31 +379,6 @@ export function createSeededState(
   }
 
   const analyticsSnapshots: AnalyticsSnapshot[] = [];
-  for (let i = 30; i >= 1; i--) {
-    const date = format(subDays(new Date(), i), "yyyy-MM-dd");
-    const tasksCompleted = 2 + ((i * 3) % 5);
-    const habitsTotal = 4;
-    const habitsCompleted = 2 + (i % 3);
-    const focusMinutes = 25 + ((i * 7) % 90);
-    const scheduleBlocksCompleted = 1 + (i % 3);
-    const taskRate = Math.min(1, tasksCompleted / 5);
-    const habitRate = habitsCompleted / habitsTotal;
-    const focusScore = Math.min(1, focusMinutes / 60);
-    const scheduleScore = scheduleBlocksCompleted / 3;
-    const todayScore = Math.round(
-      (taskRate * 0.4 + habitRate * 0.25 + focusScore * 0.2 + scheduleScore * 0.15) *
-        100,
-    );
-    analyticsSnapshots.push({
-      date,
-      tasksCompleted,
-      habitsCompleted,
-      habitsTotal,
-      focusMinutes,
-      scheduleBlocksCompleted,
-      todayScore,
-    });
-  }
 
   let state: AppState = {
     version: 1,
@@ -423,14 +398,7 @@ export function createSeededState(
     analyticsSnapshots,
   };
 
-  const todaySnap = recomputeTodaySnapshot(state);
-  state = {
-    ...state,
-    analyticsSnapshots: [
-      ...state.analyticsSnapshots.filter((s) => s.date !== todaySnap.date),
-      todaySnap,
-    ],
-  };
+  state = rebuildHistorySnapshots(state, 30);
 
   return state;
 }

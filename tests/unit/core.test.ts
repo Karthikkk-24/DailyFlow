@@ -156,3 +156,25 @@ describe("personalizeAfterOnboarding", () => {
     expect(deep.every((b) => b.endTime === "12:00")).toBe(true);
   });
 });
+
+describe("rebuildHistorySnapshots", () => {
+  it("matches focus minutes from seeded sessions", async () => {
+    const { createSeededState } = await import("@/lib/seed/demo-data");
+    const { rebuildHistorySnapshots } = await import("@/lib/analytics/score");
+    const { parseISO } = await import("date-fns");
+    const { todayKey } = await import("@/lib/utils");
+    const state = createSeededState();
+    const rebuilt = rebuildHistorySnapshots(state, 30);
+    const yesterday = todayKey(
+      new Date(Date.now() - 24 * 60 * 60 * 1000),
+    );
+    const snap = rebuilt.analyticsSnapshots.find((s) => s.date === yesterday);
+    const expected = state.focusSessions
+      .filter(
+        (s) =>
+          s.completedAt && todayKey(parseISO(s.startedAt)) === yesterday,
+      )
+      .reduce((n, s) => n + s.durationMinutes, 0);
+    expect(snap?.focusMinutes).toBe(expected);
+  });
+});
