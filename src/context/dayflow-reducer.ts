@@ -201,13 +201,24 @@ export function dayFlowReducer(
       return withSnapshot({ ...state, goals: [...state.goals, goal] });
     }
 
-    case "UPDATE_GOAL":
-      return withSnapshot({
-        ...state,
-        goals: state.goals.map((g) =>
-          g.id === action.id ? { ...g, ...action.patch } : g,
-        ),
+    case "UPDATE_GOAL": {
+      const goals = state.goals.map((g) => {
+        if (g.id !== action.id) return g;
+        const next = { ...g, ...action.patch };
+        if (action.patch.milestones) {
+          const allDone =
+            next.milestones.length > 0 &&
+            next.milestones.every((m) => m.completed);
+          if (allDone && next.status === "active") {
+            next.status = "completed";
+          } else if (!allDone && next.status === "completed") {
+            next.status = "active";
+          }
+        }
+        return next;
       });
+      return withSnapshot({ ...state, goals });
+    }
 
     case "DELETE_GOAL":
       return withSnapshot({
