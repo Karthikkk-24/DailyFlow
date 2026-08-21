@@ -55,15 +55,30 @@ Weighted average (0–100):
 - [x] Onboarding (skippable, repeatable from Settings)
 - [x] Today Dashboard with score, tasks, schedule, streaks, goals
 - [x] Tasks — list + board, drag-and-drop, filters, search, detail modal
-- [x] Habit Tracker — create, daily toggle, streaks, 12-week grid, detail
-- [x] Goals — milestones, auto progress, active/paused/completed, detail hero
-- [x] Weekly Planner — time blocks by category, create/edit/move/delete
-- [x] Focus Mode — Pomodoro presets, pause/resume/reset, task/goal link, distraction-free
-- [x] Analytics — 7/30 day charts + insights
-- [x] Settings — light/dark/system, profile, export/import JSON, reset demo, restart onboarding
-- [x] localStorage persistence + seeded demo data
-- [x] Responsive layout (desktop sidebar, mobile nav)
+- [x] Habit Tracker — create/edit, daily toggle, streaks, 12-week grid, detail
+- [x] Goals — create/edit, milestones, auto progress, active/paused/completed, detail hero
+- [x] Weekly Planner — time blocks by category, create/edit/drag across days & hours
+- [x] Focus Mode — Pomodoro presets, pause/resume/reset, task/goal link, distraction-free overlay
+- [x] Analytics — 7/30 day charts, insights, goal progress over time
+- [x] Settings — light/dark/system, profile, export/import JSON (with confirm), reset demo, restart onboarding
+- [x] localStorage persistence + seeded demo data (entity-derived analytics history)
+- [x] Responsive layout (desktop sidebar, mobile nav + More sheet)
 - [x] Unit tests for score, streaks, import validation
+
+### Known gaps
+
+Open polish items tracked as GitHub issues (P3/P4). Notable remaining work:
+
+| Area | Status |
+|------|--------|
+| Focus custom duration + tick sound | Open — [#23](https://github.com/Karthikkk-24/DailyFlow/issues/23) |
+| Integration tests + error boundary | Open — [#24](https://github.com/Karthikkk-24/DailyFlow/issues/24) |
+| Onboarding energy radio semantics | Open — [#25](https://github.com/Karthikkk-24/DailyFlow/issues/25) |
+| Profile form sync after import/reset | Open — [#26](https://github.com/Karthikkk-24/DailyFlow/issues/26) |
+| Sunday-aware seed planner dates | Open — [#22](https://github.com/Karthikkk-24/DailyFlow/issues/22) |
+| Habit detail GitHub-style week columns on mobile | Open — [#29](https://github.com/Karthikkk-24/DailyFlow/issues/29) |
+
+See the [issue tracker](https://github.com/Karthikkk-24/DailyFlow/issues) for the full list.
 
 ## Design
 
