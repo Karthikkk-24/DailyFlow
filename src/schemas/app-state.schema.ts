@@ -31,6 +31,7 @@ export const taskSchema = z.object({
   dueDate: z.string().optional(),
   dueTime: z.string().optional(),
   completedAt: z.string().optional(),
+  previousStatus: z.enum(["backlog", "today", "in_progress"]).optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
   order: z.number(),

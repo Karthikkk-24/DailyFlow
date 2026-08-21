@@ -222,7 +222,10 @@ export default function TodayPage() {
                     dispatch({
                       type: "MOVE_TASK",
                       id: task.id,
-                      status: task.status === "done" ? "today" : "done",
+                      status:
+                        task.status === "done"
+                          ? (task.previousStatus ?? "today")
+                          : "done",
                     })
                   }
                 >
