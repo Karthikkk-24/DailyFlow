@@ -115,9 +115,8 @@ export function recomputeTodaySnapshot(state: AppState, date = new Date()) {
         todayKey(parseISO(t.completedAt)) === key;
       if (completedToday) return true;
       if (t.status === "today" || t.status === "in_progress") return true;
-      if (t.dueDate === key && t.status !== "done" && t.status !== "backlog") {
-        return true;
-      }
+      // Include backlog (and any other non-done) items due today — matches Today UI
+      if (t.dueDate === key && t.status !== "done") return true;
       return false;
     },
   );
