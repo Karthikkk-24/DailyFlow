@@ -62,6 +62,8 @@ export default function HabitDetailPage() {
   const pct = habitCompletionPercent(habit, state.habitLogs, 30);
   const today = todayKey();
   const doneToday = isHabitCompletedOn(habit.id, today, state.habitLogs);
+  const dueToday = isHabitDueOn(habit, new Date());
+  const canToggleToday = dueToday || doneToday;
 
   function saveEdit(values: HabitFormValues) {
     dispatch({ type: "UPDATE_HABIT", id: habit!.id, patch: values });
@@ -77,20 +79,23 @@ export default function HabitDetailPage() {
       </Link>
       <PageHeader
         title={habit.name}
-        description={`${habit.frequency === "daily" ? "Daily" : "Weekly"} habit`}
+        description={`${habit.frequency === "daily" ? "Daily" : "Weekly"} habit${!dueToday ? " · not due today" : ""}`}
         actions={
           <>
             <Button
               variant={doneToday ? "secondary" : "primary"}
-              onClick={() =>
+              disabled={!canToggleToday}
+              title={!dueToday && !doneToday ? "Not due today" : undefined}
+              onClick={() => {
+                if (!canToggleToday) return;
                 dispatch({
                   type: "TOGGLE_HABIT_DAY",
                   habitId: habit.id,
                   date: today,
-                })
-              }
+                });
+              }}
             >
-              {doneToday ? "Undo today" : "Complete today"}
+              {doneToday ? "Undo today" : dueToday ? "Complete today" : "Not due today"}
             </Button>
             <Button variant="secondary" onClick={() => setEditOpen(true)}>
               <Pencil className="h-4 w-4" /> Edit
