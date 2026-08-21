@@ -23,12 +23,22 @@ import {
   greetingForHour,
   todayKey,
   cn,
+  timeToMinutes,
 } from "@/lib/utils";
 import { parseISO } from "date-fns";
 import { recomputeTodaySnapshot, computeStreak, goalProgress, isHabitCompletedOn, habitsDueToday } from "@/lib/analytics/score";
 import { Modal } from "@/components/ui/modal";
 import { FieldError, Input, Label } from "@/components/ui/input";
 import { TASK_CATEGORIES, type TaskPriority } from "@/types";
+
+function blockPhase(startTime: string, endTime: string, now = new Date()) {
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+  const start = timeToMinutes(startTime);
+  const end = timeToMinutes(endTime);
+  if (nowMin >= end) return "past" as const;
+  if (nowMin >= start && nowMin < end) return "current" as const;
+  return "upcoming" as const;
+}
 
 export default function TodayPage() {
   const { state, dispatch } = useDayFlow();
@@ -213,18 +223,51 @@ export default function TodayPage() {
             />
           ) : (
             <ol className="relative space-y-3 border-l border-border pl-4">
-              {blocks.map((b) => (
-                <li key={b.id} className="relative">
-                  <span className="absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full bg-primary" />
-                  <div className="df-card p-3">
-                    <p className="text-xs text-muted-foreground">
-                      {b.startTime} – {b.endTime}
-                    </p>
-                    <p className="font-medium">{b.title}</p>
-                    <Badge className="mt-1">{b.category.replace("_", " ")}</Badge>
-                  </div>
-                </li>
-              ))}
+              {blocks.map((b) => {
+                const phase = blockPhase(b.startTime, b.endTime);
+                return (
+                  <li key={b.id} className="relative">
+                    <span
+                      className={cn(
+                        "absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full",
+                        phase === "past" && "bg-muted-foreground/40",
+                        phase === "current" && "bg-primary ring-4 ring-primary/20",
+                        phase === "upcoming" && "bg-primary",
+                      )}
+                    />
+                    <div
+                      className={cn(
+                        "df-card p-3 transition",
+                        phase === "past" && "opacity-55",
+                        phase === "current" && "ring-2 ring-primary/40",
+                      )}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-xs text-muted-foreground">
+                          {b.startTime} – {b.endTime}
+                        </p>
+                        {phase === "current" && (
+                          <Badge tone="primary">Now</Badge>
+                        )}
+                        {phase === "past" && (
+                          <Badge tone="neutral">Done</Badge>
+                        )}
+                      </div>
+                      <p
+                        className={cn(
+                          "font-medium",
+                          phase === "past" && "text-muted-foreground",
+                        )}
+                      >
+                        {b.title}
+                      </p>
+                      <Badge className="mt-1">
+                        {b.category.replace("_", " ")}
+                      </Badge>
+                    </div>
+                  </li>
+                );
+              })}
             </ol>
           )}
         </div>
