@@ -15,6 +15,7 @@ import { cn, todayKey } from "@/lib/utils";
 import {
   computeStreak,
   isHabitCompletedOn,
+  isHabitDueOn,
 } from "@/lib/analytics/score";
 import type { Habit } from "@/types";
 
@@ -69,23 +70,35 @@ export default function HabitsPage() {
           {state.habits.map((habit) => {
             const { current, best } = computeStreak(habit, state.habitLogs);
             const done = isHabitCompletedOn(habit.id, today, state.habitLogs);
+            const due = isHabitDueOn(habit, new Date());
+            const canToggle = due || done;
             return (
               <li key={habit.id} className="df-card flex items-center gap-3 p-4">
                 <button
                   type="button"
-                  aria-label={done ? "Mark incomplete" : "Mark complete"}
-                  onClick={() =>
+                  disabled={!canToggle}
+                  aria-label={
+                    !due && !done
+                      ? "Not due today"
+                      : done
+                        ? "Mark incomplete"
+                        : "Mark complete"
+                  }
+                  title={!due && !done ? "Not due today" : undefined}
+                  onClick={() => {
+                    if (!canToggle) return;
                     dispatch({
                       type: "TOGGLE_HABIT_DAY",
                       habitId: habit.id,
                       date: today,
-                    })
-                  }
+                    });
+                  }}
                   className={cn(
                     "flex h-11 w-11 items-center justify-center rounded-xl border transition",
                     done
                       ? "border-transparent text-white"
                       : "border-border bg-muted/50",
+                    !canToggle && "cursor-not-allowed opacity-45",
                   )}
                   style={
                     done
@@ -100,6 +113,7 @@ export default function HabitsPage() {
                   <div className="mt-1 flex flex-wrap gap-1.5">
                     <Badge tone="accent">{current} day streak</Badge>
                     <Badge>Best {best}</Badge>
+                    {!due && <Badge tone="neutral">Not due today</Badge>}
                   </div>
                 </Link>
                 <Button
