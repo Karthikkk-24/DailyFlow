@@ -1,8 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { format, isSameDay } from "date-fns";
-import { Plus, Trash2 } from "lucide-react";
+import { addWeeks, format, isSameDay } from "date-fns";
+import { ChevronLeft, ChevronRight, Plus, Trash2 } from "lucide-react";
 import {
   DndContext,
   type DragEndEvent,
@@ -120,8 +120,16 @@ function HourSlot({
 export default function PlannerPage() {
   const { state, dispatch } = useDayFlow();
   const today = todayKey();
-  // Recompute the visible week when the local calendar day changes (avoids overnight freeze).
-  const days = useMemo(() => weekDates(new Date(), 1), [today]);
+  const [weekOffset, setWeekOffset] = useState(0);
+  // Recompute when the local calendar day or week offset changes.
+  const days = useMemo(
+    () => weekDates(addWeeks(new Date(), weekOffset), 1),
+    [today, weekOffset],
+  );
+  const weekStart = format(days[0], "yyyy-MM-dd");
+  const weekEnd = format(days[6], "yyyy-MM-dd");
+  const weekLabel =
+    format(days[0], "MMM d") + " – " + format(days[6], "MMM d, yyyy");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<ScheduleBlock | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -164,10 +172,15 @@ export default function PlannerPage() {
       hour !== undefined
         ? `${String(Math.min(hour + 1, 22)).padStart(2, "0")}:00`
         : "10:00";
+    const defaultDate =
+      date ??
+      (days.some((d) => format(d, "yyyy-MM-dd") === today)
+        ? today
+        : weekStart);
     setForm({
       title: "",
       category: "deep_work",
-      date: date ?? todayKey(),
+      date: defaultDate,
       startTime: start,
       endTime: end,
       notes: "",
@@ -260,16 +273,46 @@ export default function PlannerPage() {
         }
       />
 
-      <div className="mb-4 flex flex-wrap gap-2">
-        {BLOCK_CATEGORIES.map((c) => (
-          <Badge key={c.value} className="gap-1.5">
-            <span
-              className="inline-block h-2 w-2 rounded-full"
-              style={{ background: CATEGORY_COLORS[c.value] }}
-            />
-            {c.label}
-          </Badge>
-        ))}
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant="secondary"
+            size="sm"
+            aria-label="Previous week"
+            onClick={() => setWeekOffset((o) => o - 1)}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            aria-label="Next week"
+            onClick={() => setWeekOffset((o) => o + 1)}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+          <p className="text-sm font-medium">{weekLabel}</p>
+          {weekOffset !== 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setWeekOffset(0)}
+            >
+              This week
+            </Button>
+          )}
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {BLOCK_CATEGORIES.map((c) => (
+            <Badge key={c.value} className="gap-1.5">
+              <span
+                className="inline-block h-2 w-2 rounded-full"
+                style={{ background: CATEGORY_COLORS[c.value] }}
+              />
+              {c.label}
+            </Badge>
+          ))}
+        </div>
       </div>
 
       <DndContext sensors={sensors} onDragEnd={onDragEnd}>
@@ -382,6 +425,8 @@ export default function PlannerPage() {
               <Input
                 id="bdate"
                 type="date"
+                min={weekStart}
+                max={weekEnd}
                 value={form.date}
                 onChange={(e) => setForm({ ...form, date: e.target.value })}
               />
