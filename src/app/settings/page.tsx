@@ -245,6 +245,25 @@ export default function SettingsPage() {
             DayFlow v0.1.0 — local-first personal productivity OS. Built with
             Next.js, TypeScript, and Tailwind CSS.
           </p>
+          <p className="mt-3 text-sm">
+            <a
+              href="https://github.com/Karthikkk-24/DailyFlow/blob/main/README.md#implemented-features"
+              target="_blank"
+              rel="noreferrer"
+              className="font-medium text-primary underline-offset-2 hover:underline"
+            >
+              Feature checklist
+            </a>
+            {" · "}
+            <a
+              href="https://github.com/Karthikkk-24/DailyFlow/issues"
+              target="_blank"
+              rel="noreferrer"
+              className="text-muted-foreground underline-offset-2 hover:underline"
+            >
+              Open issues
+            </a>
+          </p>
         </Card>
       </div>
 
