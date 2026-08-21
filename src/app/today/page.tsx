@@ -318,8 +318,14 @@ export default function TodayPage() {
         <div className="space-y-6">
           <div>
             <h2 className="mb-3 font-display text-xl">Habit streaks</h2>
-            {dueHabits.length === 0 ? (
+            {state.habits.length === 0 ? (
               <EmptyState title="No habits yet" action={<Link href="/habits"><Button variant="secondary">Add habits</Button></Link>} />
+            ) : dueHabits.length === 0 ? (
+              <EmptyState
+                title="No habits due today"
+                description="You have habits, but none are scheduled for today. Check the Habits page for streaks."
+                action={<Link href="/habits"><Button variant="secondary">View habits</Button></Link>}
+              />
             ) : (
               <div className="flex gap-3 overflow-x-auto pb-1">
                 {dueHabits.map((h) => {
