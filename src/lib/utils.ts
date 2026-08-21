@@ -9,6 +9,7 @@ import {
   isToday,
   isSameDay,
 } from "date-fns";
+import type { EnergyPattern } from "@/types";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -40,6 +41,46 @@ export function greetingForHour(hour: number) {
   if (hour < 12) return "Good morning";
   if (hour < 17) return "Good afternoon";
   return "Good evening";
+}
+
+/** Suggested Focus preset minutes based on declared energy pattern. */
+export function focusMinutesForEnergy(pattern: EnergyPattern): number {
+  switch (pattern) {
+    case "morning":
+      return 45;
+    case "afternoon":
+      return 25;
+    case "evening":
+      return 25;
+    case "mixed":
+      return 30;
+  }
+}
+
+/** Short Today tip that uses energyPattern relative to the current hour. */
+export function energyGuidance(pattern: EnergyPattern, hour: number): string {
+  const inMorning = hour < 12;
+  const inAfternoon = hour >= 12 && hour < 17;
+  const inEvening = hour >= 17;
+
+  switch (pattern) {
+    case "morning":
+      return inMorning
+        ? "Morning energy — protect a deep-work block before noon."
+        : "You peak in the mornings; keep remaining work light or prep tomorrow.";
+    case "afternoon":
+      return inAfternoon
+        ? "Afternoon peak — schedule focus or hard tasks now."
+        : inMorning
+          ? "Ease in this morning; save deep work for after lunch."
+          : "Wind down — your strongest hours were earlier today.";
+    case "evening":
+      return inEvening
+        ? "Evening energy — a solid Focus session still fits tonight."
+        : "Save demanding focus for later; keep mornings lighter.";
+    case "mixed":
+      return "Energy varies — pick a Focus length that matches how you feel right now.";
+  }
 }
 
 export function weekDates(anchor = new Date(), weekStartsOn: 0 | 1 = 1) {

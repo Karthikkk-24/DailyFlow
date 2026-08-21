@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import {
   formatDisplayDate,
   greetingForHour,
+  energyGuidance,
   todayKey,
   cn,
   timeToMinutes,
@@ -48,7 +49,9 @@ export default function TodayPage() {
 
   const today = todayKey();
   const snap = useMemo(() => recomputeTodaySnapshot(state), [state]);
-  const greeting = greetingForHour(new Date().getHours());
+  const hour = new Date().getHours();
+  const greeting = greetingForHour(hour);
+  const energyTip = energyGuidance(state.profile.energyPattern, hour);
 
   const todayTasks = state.tasks
     .filter(
@@ -112,10 +115,11 @@ export default function TodayPage() {
       />
 
       {state.profile.primaryGoal && (
-        <p className="mb-6 text-sm text-muted-foreground">
+        <p className="mb-2 text-sm text-muted-foreground">
           Focus: <span className="text-foreground">{state.profile.primaryGoal}</span>
         </p>
       )}
+      <p className="mb-6 text-sm text-muted-foreground">{energyTip}</p>
 
       <div className="grid gap-4 lg:grid-cols-[220px_1fr]">
         <Card className="flex flex-col items-center justify-center gap-2">

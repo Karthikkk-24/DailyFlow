@@ -18,6 +18,7 @@ import { Card, PageHeader } from "@/components/ui/card";
 import {
   fillRange,
   goalProgressOverTime,
+  energyAlignmentNote,
   mostProductiveDay,
   mostProductiveHour,
   snapshotsInRange,
@@ -54,6 +55,10 @@ export default function AnalyticsPage() {
 
   const productiveDay = mostProductiveDay(data);
   const productiveHour = mostProductiveHour(state.focusSessions);
+  const energyNote = energyAlignmentNote(
+    state.profile.energyPattern,
+    productiveHour,
+  );
   const focusTotal = sumFocusMinutes(data);
   const goalSeries = useMemo(
     () => goalProgressOverTime(state.goals, days),
@@ -92,6 +97,7 @@ export default function AnalyticsPage() {
         <Card>
           <p className="text-xs uppercase text-muted-foreground">Best focus window</p>
           <p className="mt-2 text-xl font-semibold">{productiveHour}</p>
+          <p className="mt-1 text-xs text-muted-foreground">{energyNote}</p>
         </Card>
         <Card>
           <p className="text-xs uppercase text-muted-foreground">Focus hours</p>
