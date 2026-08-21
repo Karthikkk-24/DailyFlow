@@ -121,22 +121,30 @@ export default function HabitDetailPage() {
       <section className="mt-8">
         <h2 className="mb-3 font-display text-xl">Last 12 weeks</h2>
         <div className="df-card p-4">
-          <div className="grid grid-cols-12 gap-1 sm:grid-cols-[repeat(84,minmax(0,1fr))] sm:gap-0.5">
-            {grid.map((cell) => (
+          <div className="flex gap-1 overflow-x-auto pb-1">
+            {Array.from({ length: 12 }, (_, week) => (
               <div
-                key={cell.date}
-                title={`${cell.date}${cell.done ? " · done" : cell.due ? " · missed" : ""}`}
-                className={cn(
-                  "aspect-square rounded-[3px]",
-                  !cell.due && "bg-muted/40",
-                  cell.due && !cell.done && "bg-muted",
-                  cell.done && "bg-primary",
-                )}
-              />
+                key={week}
+                className="flex shrink-0 flex-col gap-1"
+                aria-label={`Week ${week + 1} of 12`}
+              >
+                {grid.slice(week * 7, week * 7 + 7).map((cell) => (
+                  <div
+                    key={cell.date}
+                    title={`${cell.date}${cell.done ? " · done" : cell.due ? " · missed" : ""}`}
+                    className={cn(
+                      "h-3 w-3 rounded-[3px] sm:h-3.5 sm:w-3.5",
+                      !cell.due && "bg-muted/40",
+                      cell.due && !cell.done && "bg-muted",
+                      cell.done && "bg-primary",
+                    )}
+                  />
+                ))}
+              </div>
             ))}
           </div>
           <p className="mt-3 text-xs text-muted-foreground">
-            Completion last 30 days: {pct}%
+            Completion last 30 days: {pct}% · columns are weeks (top → bottom = day of week)
           </p>
         </div>
       </section>
