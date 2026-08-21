@@ -126,6 +126,7 @@ export function ConfirmDialog({
   description,
   confirmLabel = "Confirm",
   danger,
+  children,
 }: {
   open: boolean;
   onClose: () => void;
@@ -134,10 +135,12 @@ export function ConfirmDialog({
   description: string;
   confirmLabel?: string;
   danger?: boolean;
+  children?: React.ReactNode;
 }) {
   return (
     <Modal open={open} onClose={onClose} title={title}>
       <p className="text-sm text-muted-foreground">{description}</p>
+      {children && <div className="mt-4">{children}</div>}
       <div className="mt-5 flex justify-end gap-2">
         <Button variant="secondary" onClick={onClose}>
           Cancel
