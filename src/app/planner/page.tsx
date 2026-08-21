@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { addWeeks, format, isSameDay } from "date-fns";
+import { useMemo, useRef, useState } from "react";
+import { addWeeks, format, isSameDay, parseISO } from "date-fns";
 import { ChevronLeft, ChevronRight, Plus, Trash2 } from "lucide-react";
 import {
   DndContext,
@@ -58,11 +58,16 @@ function DraggableBlock({
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({ id: block.id, data: { block } });
+  const draggedRef = useRef(false);
   const top = ((timeToMinutes(block.startTime) - 6 * 60) / 60) * 64;
   const height = Math.max(
     28,
     ((timeToMinutes(block.endTime) - timeToMinutes(block.startTime)) / 60) * 64,
   );
+
+  if (isDragging) {
+    draggedRef.current = true;
+  }
 
   return (
     <div
@@ -71,7 +76,11 @@ function DraggableBlock({
       {...attributes}
       onClick={(e) => {
         e.stopPropagation();
-        if (!isDragging) onOpen(block);
+        if (draggedRef.current) {
+          draggedRef.current = false;
+          return;
+        }
+        onOpen(block);
       }}
       className={cn(
         "absolute inset-x-1 z-10 cursor-grab touch-none overflow-hidden rounded-lg border border-white/20 px-2 py-1 text-left text-white shadow-sm active:cursor-grabbing",
@@ -123,7 +132,7 @@ export default function PlannerPage() {
   const [weekOffset, setWeekOffset] = useState(0);
   // Recompute when the local calendar day or week offset changes.
   const days = useMemo(
-    () => weekDates(addWeeks(new Date(), weekOffset), 1),
+    () => weekDates(addWeeks(parseISO(`${today}T12:00:00`), weekOffset), 1),
     [today, weekOffset],
   );
   const weekStart = format(days[0], "yyyy-MM-dd");
