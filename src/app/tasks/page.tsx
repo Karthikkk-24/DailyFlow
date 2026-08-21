@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   DndContext,
   DragEndEvent,
@@ -137,15 +137,23 @@ export default function TasksPage() {
   const { state, dispatch } = useDayFlow();
   const [view, setView] = useState<"list" | "board">("board");
   const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [priority, setPriority] = useState<string>("all");
   const [category, setCategory] = useState<string>("all");
   const [status, setStatus] = useState<string>("all");
   const [due, setDue] = useState<string>("all");
+  const [dueFrom, setDueFrom] = useState("");
+  const [dueTo, setDueTo] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Task | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [error, setError] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const id = window.setTimeout(() => setDebouncedQuery(query), 300);
+    return () => window.clearTimeout(id);
+  }, [query]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -153,7 +161,7 @@ export default function TasksPage() {
   );
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const q = debouncedQuery.trim().toLowerCase();
     const today = todayKey();
     return state.tasks
       .filter((t) => {
@@ -166,10 +174,15 @@ export default function TasksPage() {
         if (due === "overdue" && (!t.dueDate || t.dueDate >= today || t.status === "done"))
           return false;
         if (due === "none" && t.dueDate) return false;
+        if (due === "range") {
+          if (!t.dueDate) return false;
+          if (dueFrom && t.dueDate < dueFrom) return false;
+          if (dueTo && t.dueDate > dueTo) return false;
+        }
         return true;
       })
       .sort((a, b) => a.order - b.order);
-  }, [state.tasks, query, priority, category, status, due]);
+  }, [state.tasks, debouncedQuery, priority, category, status, due, dueFrom, dueTo]);
 
   function openCreate() {
     setEditing(null);
@@ -333,9 +346,33 @@ export default function TasksPage() {
           <option value="all">Any due date</option>
           <option value="today">Due today</option>
           <option value="overdue">Overdue</option>
+          <option value="range">Date range</option>
           <option value="none">No due date</option>
         </Select>
       </div>
+
+      {due === "range" && (
+        <div className="mb-5 grid gap-2 sm:grid-cols-2">
+          <div>
+            <Label htmlFor="due-from">Due from</Label>
+            <Input
+              id="due-from"
+              type="date"
+              value={dueFrom}
+              onChange={(e) => setDueFrom(e.target.value)}
+            />
+          </div>
+          <div>
+            <Label htmlFor="due-to">Due to</Label>
+            <Input
+              id="due-to"
+              type="date"
+              value={dueTo}
+              onChange={(e) => setDueTo(e.target.value)}
+            />
+          </div>
+        </div>
+      )}
 
       {filtered.length === 0 ? (
         <EmptyState
