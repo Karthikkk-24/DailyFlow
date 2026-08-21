@@ -123,12 +123,18 @@ export default function TodayPage() {
 
       <div className="grid gap-4 lg:grid-cols-[220px_1fr]">
         <Card className="flex flex-col items-center justify-center gap-2">
-          <div
-            className="group relative"
+          <button
+            type="button"
+            className="group relative rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card"
+            aria-describedby="today-score-breakdown"
             title={`Tasks ${snap.breakdown.tasks}% (40%) · Habits ${snap.breakdown.habits}% (25%) · Focus ${snap.breakdown.focus}% (20%) · Schedule ${snap.breakdown.schedule}% (15%)`}
           >
             <ProgressRing value={snap.todayScore} label="Today" />
-            <div className="pointer-events-none absolute left-1/2 top-full z-10 mt-2 hidden w-56 -translate-x-1/2 rounded-xl border border-border bg-card p-3 text-left text-xs shadow-lg group-hover:block group-focus-within:block">
+            <div
+              id="today-score-breakdown"
+              role="tooltip"
+              className="pointer-events-none absolute left-1/2 top-full z-10 mt-2 hidden w-56 -translate-x-1/2 rounded-xl border border-border bg-card p-3 text-left text-xs shadow-lg group-hover:block group-focus:block group-focus-visible:block"
+            >
               <p className="mb-2 font-medium text-foreground">Score breakdown</p>
               <ul className="space-y-1 text-muted-foreground">
                 <li className="flex justify-between gap-2">
@@ -157,7 +163,7 @@ export default function TodayPage() {
                 </li>
               </ul>
             </div>
-          </div>
+          </button>
           <details className="w-full text-center text-xs text-muted-foreground sm:hidden">
             <summary className="cursor-pointer">Score breakdown</summary>
             <ul className="mt-2 space-y-1 text-left">
@@ -167,8 +173,8 @@ export default function TodayPage() {
               <li>Schedule 15% → {snap.breakdown.schedule}%</li>
             </ul>
           </details>
-          <p className="text-center text-xs text-muted-foreground">
-            Hover the ring for weighted breakdown
+          <p className="hidden text-center text-xs text-muted-foreground sm:block">
+            Hover or focus the ring for weighted breakdown
           </p>
         </Card>
 
