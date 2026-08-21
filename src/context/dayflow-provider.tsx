@@ -2,7 +2,6 @@
 
 import {
   createContext,
-  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -108,9 +107,4 @@ export function useDayFlow() {
     throw new Error("useDayFlow must be used within DayFlowProvider");
   }
   return ctx;
-}
-
-export function useDayFlowActions() {
-  const { dispatch } = useDayFlow();
-  return useCallback((action: DayFlowAction) => dispatch(action), [dispatch]);
 }

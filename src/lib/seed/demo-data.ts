@@ -46,29 +46,6 @@ function defaultProfile(overrides?: Partial<UserProfile>): UserProfile {
   };
 }
 
-export function createEmptyState(
-  profileOverrides?: Partial<UserProfile>,
-): AppState {
-  const now = nowIso();
-  return {
-    version: 1,
-    meta: {
-      createdAt: now,
-      updatedAt: now,
-      onboardingCompleted: false,
-      theme: "system",
-    },
-    profile: defaultProfile(profileOverrides),
-    tasks: [],
-    habits: [],
-    habitLogs: [],
-    goals: [],
-    scheduleBlocks: [],
-    focusSessions: [],
-    analyticsSnapshots: [],
-  };
-}
-
 export function createSeededState(
   profileOverrides?: Partial<UserProfile>,
 ): AppState {

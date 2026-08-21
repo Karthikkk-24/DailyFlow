@@ -132,8 +132,3 @@ export function parseImportJson(text: string): StorageResult<AppState> {
 
   return { data: parsed.data, error: null };
 }
-
-export function clearState(): void {
-  if (typeof window === "undefined") return;
-  window.localStorage.removeItem(STORAGE_KEY);
-}
