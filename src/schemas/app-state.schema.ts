@@ -18,6 +18,7 @@ export const appMetaSchema = z.object({
   updatedAt: z.string(),
   onboardingCompleted: z.boolean(),
   theme: z.enum(["light", "dark", "system"]),
+  focusTickSound: z.boolean().default(false),
 });
 
 export const taskSchema = z.object({

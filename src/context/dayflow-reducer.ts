@@ -20,6 +20,7 @@ export type DayFlowAction =
   | { type: "RESTART_ONBOARDING" }
   | { type: "UPDATE_PROFILE"; profile: Partial<UserProfile> }
   | { type: "SET_THEME"; theme: ThemeMode }
+  | { type: "SET_FOCUS_TICK_SOUND"; enabled: boolean }
   | { type: "ADD_TASK"; task: Omit<Task, "id" | "createdAt" | "updatedAt" | "order"> & { order?: number } }
   | { type: "UPDATE_TASK"; id: string; patch: Partial<Task> }
   | { type: "DELETE_TASK"; id: string }
@@ -85,6 +86,12 @@ export function dayFlowReducer(
       return touch({
         ...state,
         meta: { ...state.meta, theme: action.theme },
+      });
+
+    case "SET_FOCUS_TICK_SOUND":
+      return touch({
+        ...state,
+        meta: { ...state.meta, focusTickSound: action.enabled },
       });
 
     case "ADD_TASK": {
@@ -299,6 +306,7 @@ export function dayFlowReducer(
           ...seeded.meta,
           onboardingCompleted: true,
           theme: state.meta.theme,
+          focusTickSound: state.meta.focusTickSound,
         },
       };
     }

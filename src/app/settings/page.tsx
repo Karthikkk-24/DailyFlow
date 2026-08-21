@@ -108,6 +108,26 @@ export default function SettingsPage() {
         </Card>
 
         <Card>
+          <h2 className="font-display text-xl">Focus</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Optional timer feedback. Off by default.
+          </p>
+          <label className="mt-4 flex items-center gap-3 text-sm">
+            <input
+              type="checkbox"
+              checked={state.meta.focusTickSound}
+              onChange={(e) =>
+                dispatch({
+                  type: "SET_FOCUS_TICK_SOUND",
+                  enabled: e.target.checked,
+                })
+              }
+            />
+            Play a subtle tick each second while Focus is running
+          </label>
+        </Card>
+
+        <Card>
           <h2 className="font-display text-xl">Profile</h2>
           <div className="mt-4 space-y-3">
             <div>
