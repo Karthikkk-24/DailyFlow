@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { FieldError, Input, Label, Textarea } from "@/components/ui/input";
 import { useDayFlow } from "@/context/dayflow-provider";
 import type { EnergyPattern, UserProfile } from "@/types";
-import { cn } from "@/lib/utils";
+import { cn, timeToMinutes } from "@/lib/utils";
 
 const HABIT_PRESETS = [
   "Morning stretch",
@@ -73,6 +73,12 @@ export default function OnboardingPage() {
     if (step === 0 && !name.trim()) {
       setError("Name is required.");
       return;
+    }
+    if (step === 2) {
+      if (timeToMinutes(end) <= timeToMinutes(start)) {
+        setError("End time must be after start time.");
+        return;
+      }
     }
     if (step === total - 1) {
       finish();
@@ -173,6 +179,7 @@ export default function OnboardingPage() {
                 />
               </div>
             </div>
+            <FieldError>{error}</FieldError>
           </div>
         )}
 
