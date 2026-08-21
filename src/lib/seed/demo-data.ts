@@ -299,8 +299,9 @@ export function createSeededState(
   ];
 
   const scheduleBlocks: ScheduleBlock[] = [];
+  const weekDays = weekDates(new Date(), 1);
   for (let d = 0; d < 7; d++) {
-    const date = format(addDays(new Date(), d - getDay(new Date()) + 1), "yyyy-MM-dd");
+    const date = format(weekDays[d], "yyyy-MM-dd");
     if (d === 5 || d === 6) {
       scheduleBlocks.push({
         id: createId("blk"),
