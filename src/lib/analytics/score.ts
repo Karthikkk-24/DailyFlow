@@ -198,11 +198,18 @@ export function recomputeTodaySnapshot(state: AppState, date = new Date()) {
     focusMinutes,
     scheduleBlocksCompleted,
     todayScore,
+    breakdown: {
+      tasks: Math.round(taskRate * 100),
+      habits: Math.round(habitRate * 100),
+      focus: Math.round(focusScore * 100),
+      schedule: Math.round(scheduleScore * 100),
+      weights: { tasks: 40, habits: 25, focus: 20, schedule: 15 },
+    },
   };
 }
 
 export function upsertTodaySnapshot(state: AppState): AppState {
-  const snap = recomputeTodaySnapshot(state);
+  const { breakdown: _breakdown, ...snap } = recomputeTodaySnapshot(state);
   const others = state.analyticsSnapshots.filter((s) => s.date !== snap.date);
   return {
     ...state,
@@ -226,7 +233,8 @@ export function rebuildHistorySnapshots(
     if (i > 0) {
       at.setHours(23, 59, 59, 999);
     }
-    snaps.push(recomputeTodaySnapshot(state, at));
+    const { breakdown: _b, ...snap } = recomputeTodaySnapshot(state, at);
+    snaps.push(snap);
   }
   return {
     ...state,
