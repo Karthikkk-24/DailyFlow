@@ -119,13 +119,52 @@ export default function TodayPage() {
 
       <div className="grid gap-4 lg:grid-cols-[220px_1fr]">
         <Card className="flex flex-col items-center justify-center gap-2">
-          <ProgressRing value={snap.todayScore} label="Today" />
+          <div
+            className="group relative"
+            title={`Tasks ${snap.breakdown.tasks}% (40%) · Habits ${snap.breakdown.habits}% (25%) · Focus ${snap.breakdown.focus}% (20%) · Schedule ${snap.breakdown.schedule}% (15%)`}
+          >
+            <ProgressRing value={snap.todayScore} label="Today" />
+            <div className="pointer-events-none absolute left-1/2 top-full z-10 mt-2 hidden w-56 -translate-x-1/2 rounded-xl border border-border bg-card p-3 text-left text-xs shadow-lg group-hover:block group-focus-within:block">
+              <p className="mb-2 font-medium text-foreground">Score breakdown</p>
+              <ul className="space-y-1 text-muted-foreground">
+                <li className="flex justify-between gap-2">
+                  <span>Tasks (40%)</span>
+                  <span className="tabular-nums text-foreground">
+                    {snap.breakdown.tasks}%
+                  </span>
+                </li>
+                <li className="flex justify-between gap-2">
+                  <span>Habits (25%)</span>
+                  <span className="tabular-nums text-foreground">
+                    {snap.breakdown.habits}%
+                  </span>
+                </li>
+                <li className="flex justify-between gap-2">
+                  <span>Focus (20%)</span>
+                  <span className="tabular-nums text-foreground">
+                    {snap.breakdown.focus}%
+                  </span>
+                </li>
+                <li className="flex justify-between gap-2">
+                  <span>Schedule (15%)</span>
+                  <span className="tabular-nums text-foreground">
+                    {snap.breakdown.schedule}%
+                  </span>
+                </li>
+              </ul>
+            </div>
+          </div>
+          <details className="w-full text-center text-xs text-muted-foreground sm:hidden">
+            <summary className="cursor-pointer">Score breakdown</summary>
+            <ul className="mt-2 space-y-1 text-left">
+              <li>Tasks 40% → {snap.breakdown.tasks}%</li>
+              <li>Habits 25% → {snap.breakdown.habits}%</li>
+              <li>Focus 20% → {snap.breakdown.focus}%</li>
+              <li>Schedule 15% → {snap.breakdown.schedule}%</li>
+            </ul>
+          </details>
           <p className="text-center text-xs text-muted-foreground">
-            Tasks {Math.round((snap.tasksCompleted / Math.max(1, todayTasks.filter(t=>t.status!=='done').length + snap.tasksCompleted)) * 100) || 0}% · Habits{" "}
-            {snap.habitsTotal
-              ? Math.round((snap.habitsCompleted / snap.habitsTotal) * 100)
-              : 0}
-            % · Focus {snap.focusMinutes}m
+            Hover the ring for weighted breakdown
           </p>
         </Card>
 
