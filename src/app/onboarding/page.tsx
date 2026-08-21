@@ -185,13 +185,27 @@ export default function OnboardingPage() {
 
         {step === 3 && (
           <div className="space-y-4">
-            <h2 className="font-display text-2xl">When is your energy highest?</h2>
-            <div className="grid gap-2 sm:grid-cols-2">
+            <h2 id="energy-heading" className="font-display text-2xl">
+              When is your energy highest?
+            </h2>
+            <div
+              role="radiogroup"
+              aria-labelledby="energy-heading"
+              className="grid gap-2 sm:grid-cols-2"
+            >
               {ENERGY.map((opt) => (
                 <button
                   key={opt.value}
                   type="button"
+                  role="radio"
+                  aria-checked={energy === opt.value}
                   onClick={() => setEnergy(opt.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === " " || e.key === "Enter") {
+                      e.preventDefault();
+                      setEnergy(opt.value);
+                    }
+                  }}
                   className={cn(
                     "rounded-xl border p-4 text-left transition",
                     energy === opt.value
