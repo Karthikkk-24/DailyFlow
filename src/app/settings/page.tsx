@@ -223,20 +223,16 @@ export default function SettingsPage() {
           dispatch({ type: "RESET_DEMO", keepName });
           push("Demo data restored", "success");
         }}
-      />
-
-      {resetOpen && (
-        <div className="fixed bottom-28 left-1/2 z-[70] -translate-x-1/2 rounded-xl border border-border bg-card px-4 py-2 text-sm shadow-lg">
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={keepName}
-              onChange={(e) => setKeepName(e.target.checked)}
-            />
-            Keep my name after reset
-          </label>
-        </div>
-      )}
+      >
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={keepName}
+            onChange={(e) => setKeepName(e.target.checked)}
+          />
+          Keep my name after reset
+        </label>
+      </ConfirmDialog>
     </div>
   );
 }
