@@ -54,7 +54,7 @@ export default function AnalyticsPage() {
   }, [state.habits, state.habitLogs]);
 
   const productiveDay = mostProductiveDay(data);
-  const productiveHour = mostProductiveHour(state.focusSessions);
+  const productiveHour = mostProductiveHour(state.focusSessions, days);
   const energyNote = energyAlignmentNote(
     state.profile.energyPattern,
     productiveHour,

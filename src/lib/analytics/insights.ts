@@ -71,8 +71,18 @@ export function mostProductiveDay(snapshots: AnalyticsSnapshot[]): string {
   return bestAvg < 0 ? "—" : DAY_NAMES[best];
 }
 
-export function mostProductiveHour(sessions: FocusSession[]): string {
-  const completed = sessions.filter((s) => s.completedAt);
+export function mostProductiveHour(
+  sessions: FocusSession[],
+  days?: 7 | 30,
+  asOf = new Date(),
+): string {
+  let completed = sessions.filter((s) => s.completedAt);
+  if (days) {
+    const start = todayKey(subDays(asOf, days - 1));
+    completed = completed.filter(
+      (s) => todayKey(parseISO(s.startedAt)) >= start,
+    );
+  }
   if (completed.length === 0) return "—";
   const buckets = new Array(24).fill(0);
   for (const s of completed) {
