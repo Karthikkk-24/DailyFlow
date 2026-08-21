@@ -8,10 +8,9 @@ import { Button } from "@/components/ui/button";
 import { FieldError, Input, Label, Select, Textarea } from "@/components/ui/input";
 import { ConfirmDialog } from "@/components/ui/modal";
 import { useToast } from "@/components/ui/toast";
-import { downloadJson } from "@/lib/utils";
+import { downloadJson, timeToMinutes, cn } from "@/lib/utils";
 import { backupCurrentState, parseImportJson } from "@/lib/storage";
 import type { AppState, EnergyPattern, ThemeMode } from "@/types";
-import { cn } from "@/lib/utils";
 
 export default function SettingsPage() {
   const { state, dispatch } = useDayFlow();
@@ -32,6 +31,10 @@ export default function SettingsPage() {
   function saveProfile() {
     if (!name.trim()) {
       setError("Name is required.");
+      return;
+    }
+    if (timeToMinutes(end) <= timeToMinutes(start)) {
+      setError("End time must be after start time.");
       return;
     }
     dispatch({
