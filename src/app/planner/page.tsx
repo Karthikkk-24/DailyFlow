@@ -119,7 +119,9 @@ function HourSlot({
 
 export default function PlannerPage() {
   const { state, dispatch } = useDayFlow();
-  const days = useMemo(() => weekDates(new Date(), 1), []);
+  const today = todayKey();
+  // Recompute the visible week when the local calendar day changes (avoids overnight freeze).
+  const days = useMemo(() => weekDates(new Date(), 1), [today]);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<ScheduleBlock | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
