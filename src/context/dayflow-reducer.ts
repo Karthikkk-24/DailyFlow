@@ -59,7 +59,8 @@ export function dayFlowReducer(
   switch (action.type) {
     case "HYDRATE":
     case "REPLACE_STATE":
-      return action.state;
+      // Refresh today's analytics row so charts aren't stale until the next mutation.
+      return upsertTodaySnapshot(action.state);
 
     case "COMPLETE_ONBOARDING":
       return withSnapshot(personalizeAfterOnboarding(state, action.profile));

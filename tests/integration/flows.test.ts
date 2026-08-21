@@ -126,3 +126,28 @@ describe("integration: undo complete restores previous status", () => {
     expect(restored?.completedAt).toBeUndefined();
   });
 });
+
+describe("integration: hydrate refreshes today snapshot", () => {
+  it("recomputes today's analytics row on HYDRATE and REPLACE_STATE", () => {
+    const base = createSeededState();
+    const today = todayKey();
+    const stale: typeof base = {
+      ...base,
+      analyticsSnapshots: base.analyticsSnapshots.map((s) =>
+        s.date === today ? { ...s, todayScore: 0, focusMinutes: 0 } : s,
+      ),
+    };
+    const hydrated = dayFlowReducer(stale, { type: "HYDRATE", state: stale });
+    const live = recomputeTodaySnapshot(stale);
+    const snap = hydrated.analyticsSnapshots.find((s) => s.date === today);
+    expect(snap?.todayScore).toBe(live.todayScore);
+    expect(snap?.focusMinutes).toBe(live.focusMinutes);
+
+    const replaced = dayFlowReducer(base, {
+      type: "REPLACE_STATE",
+      state: stale,
+    });
+    const replacedSnap = replaced.analyticsSnapshots.find((s) => s.date === today);
+    expect(replacedSnap?.todayScore).toBe(live.todayScore);
+  });
+});
