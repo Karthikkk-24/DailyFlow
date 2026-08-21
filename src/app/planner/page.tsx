@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { addWeeks, format, isSameDay, parseISO } from "date-fns";
 import { ChevronLeft, ChevronRight, Plus, Trash2 } from "lucide-react";
 import {
@@ -65,9 +65,9 @@ function DraggableBlock({
     ((timeToMinutes(block.endTime) - timeToMinutes(block.startTime)) / 60) * 64,
   );
 
-  if (isDragging) {
-    draggedRef.current = true;
-  }
+  useEffect(() => {
+    if (isDragging) draggedRef.current = true;
+  }, [isDragging]);
 
   return (
     <div
