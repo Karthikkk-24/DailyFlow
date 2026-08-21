@@ -29,6 +29,8 @@ export interface AppMeta {
   updatedAt: string;
   onboardingCompleted: boolean;
   theme: ThemeMode;
+  /** Subtle per-second tick during Focus; off by default. */
+  focusTickSound: boolean;
 }
 
 export interface Task {

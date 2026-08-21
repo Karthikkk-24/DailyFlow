@@ -5,12 +5,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Pause, Play, RotateCcw, X } from "lucide-react";
 import { useDayFlow } from "@/context/dayflow-provider";
 import { Button } from "@/components/ui/button";
-import { Label, Select } from "@/components/ui/input";
+import { Input, Label, Select } from "@/components/ui/input";
 import { cn, nowIso } from "@/lib/utils";
 import { useToast } from "@/components/ui/toast";
 
 type TimerState = "idle" | "running" | "paused" | "completed";
 const PRESETS = [25, 45, 60];
+const CUSTOM_MIN = 1;
+const CUSTOM_MAX = 180;
 const FOCUS_KEY = "dayflow:focus:session";
 
 type SavedFocus = {
@@ -32,6 +34,41 @@ function readSavedFocus(): SavedFocus | null {
   } catch {
     sessionStorage.removeItem(FOCUS_KEY);
     return null;
+  }
+}
+
+function clampCustomMinutes(value: number) {
+  if (!Number.isFinite(value)) return CUSTOM_MIN;
+  return Math.min(CUSTOM_MAX, Math.max(CUSTOM_MIN, Math.round(value)));
+}
+
+let tickAudioCtx: AudioContext | null = null;
+
+function playTick() {
+  try {
+    const AudioCtx =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext: typeof AudioContext })
+        .webkitAudioContext;
+    if (!tickAudioCtx || tickAudioCtx.state === "closed") {
+      tickAudioCtx = new AudioCtx();
+    }
+    if (tickAudioCtx.state === "suspended") {
+      void tickAudioCtx.resume();
+    }
+    const osc = tickAudioCtx.createOscillator();
+    const gain = tickAudioCtx.createGain();
+    osc.type = "sine";
+    osc.frequency.value = 880;
+    gain.gain.value = 0.03;
+    osc.connect(gain);
+    gain.connect(tickAudioCtx.destination);
+    const now = tickAudioCtx.currentTime;
+    osc.start(now);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.04);
+    osc.stop(now + 0.04);
+  } catch {
+    // Ignore autoplay / AudioContext failures
   }
 }
 
@@ -84,9 +121,14 @@ export default function FocusPage() {
   const [taskId, setTaskId] = useState(boot.taskId);
   const [goalId, setGoalId] = useState(boot.goalId);
   const [distractionFree, setDistractionFree] = useState(false);
+  const [customDraft, setCustomDraft] = useState(
+    PRESETS.includes(boot.minutes) ? "30" : String(boot.minutes),
+  );
+  const [usingCustom, setUsingCustom] = useState(!PRESETS.includes(boot.minutes));
   const startedAt = useRef<string | null>(boot.startedAt);
   const endAt = useRef<number | null>(boot.endAt);
   const pendingComplete = useRef(boot.pendingComplete);
+  const lastTickSecond = useRef<number | null>(null);
 
   const formatTime = (secs: number) => {
     const m = Math.floor(secs / 60);
@@ -135,18 +177,29 @@ export default function FocusPage() {
   }, [minutes, remaining, timerState, taskId, goalId]);
 
   useEffect(() => {
-    if (timerState !== "running") return;
+    if (timerState !== "running") {
+      lastTickSecond.current = null;
+      return;
+    }
     const id = window.setInterval(() => {
       if (!endAt.current) return;
       const left = Math.max(0, Math.round((endAt.current - Date.now()) / 1000));
       setRemaining(left);
+      if (
+        state.meta.focusTickSound &&
+        left > 0 &&
+        lastTickSecond.current !== left
+      ) {
+        lastTickSecond.current = left;
+        playTick();
+      }
       if (left === 0) {
         window.clearInterval(id);
         complete();
       }
     }, 250);
     return () => window.clearInterval(id);
-  }, [timerState, complete]);
+  }, [timerState, complete, state.meta.focusTickSound]);
 
   useEffect(() => {
     if (timerState === "running" || timerState === "paused") {
@@ -187,6 +240,17 @@ export default function FocusPage() {
 
   function pickPreset(m: number) {
     if (timerState === "running") return;
+    setUsingCustom(false);
+    setMinutes(m);
+    setRemaining(m * 60);
+    setTimerState("idle");
+  }
+
+  function applyCustom() {
+    if (timerState === "running") return;
+    const m = clampCustomMinutes(Number(customDraft));
+    setCustomDraft(String(m));
+    setUsingCustom(true);
     setMinutes(m);
     setRemaining(m * 60);
     setTimerState("idle");
@@ -274,22 +338,53 @@ export default function FocusPage() {
         ) : (
           <>
             {!distractionFree && timerState === "idle" && (
-              <div className="mb-6 flex gap-2">
-                {PRESETS.map((m) => (
-                  <button
-                    key={m}
+              <div className="mb-6 flex w-full flex-col items-center gap-3">
+                <div className="flex flex-wrap justify-center gap-2">
+                  {PRESETS.map((m) => (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => pickPreset(m)}
+                      className={cn(
+                        "rounded-full px-4 py-1.5 text-sm",
+                        !usingCustom && minutes === m
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted",
+                      )}
+                    >
+                      {m}m
+                    </button>
+                  ))}
+                </div>
+                <div className="flex w-full max-w-xs items-end gap-2">
+                  <div className="flex-1">
+                    <Label htmlFor="custom-mins">Custom (minutes)</Label>
+                    <Input
+                      id="custom-mins"
+                      type="number"
+                      min={CUSTOM_MIN}
+                      max={CUSTOM_MAX}
+                      value={customDraft}
+                      onChange={(e) => setCustomDraft(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          applyCustom();
+                        }
+                      }}
+                    />
+                  </div>
+                  <Button
                     type="button"
-                    onClick={() => pickPreset(m)}
-                    className={cn(
-                      "rounded-full px-4 py-1.5 text-sm",
-                      minutes === m
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted",
-                    )}
+                    variant={usingCustom ? "primary" : "secondary"}
+                    onClick={applyCustom}
                   >
-                    {m}m
-                  </button>
-                ))}
+                    Set
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {CUSTOM_MIN}–{CUSTOM_MAX} minutes
+                </p>
               </div>
             )}
 

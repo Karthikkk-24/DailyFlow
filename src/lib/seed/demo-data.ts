@@ -365,6 +365,7 @@ export function createSeededState(
       updatedAt: now,
       onboardingCompleted: true,
       theme: "system",
+      focusTickSound: false,
     },
     profile,
     tasks,
