@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   computeStreak,
   goalProgress,
@@ -8,6 +8,7 @@ import { parseImportJson } from "@/lib/storage";
 import { createSeededState } from "@/lib/seed/demo-data";
 import type { AppState, Habit, HabitLog } from "@/types";
 import { format, subDays } from "date-fns";
+import { weekDates } from "@/lib/utils";
 
 describe("goalProgress", () => {
   it("returns 0 for empty milestones", () => {
@@ -135,6 +136,26 @@ describe("parseImportJson", () => {
     const result = parseImportJson(JSON.stringify({ version: 1 }));
     expect(result.data).toBeNull();
     expect(result.error).toMatch(/Invalid DayFlow/i);
+  });
+});
+
+describe("createSeededState schedule week", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("aligns seeded blocks to Mon–Sun week when today is Sunday", () => {
+    // 2026-08-16 is a Sunday — the buggy formula used to shift into next week
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-08-16T12:00:00"));
+    const state = createSeededState();
+    const expected = weekDates(new Date(), 1).map((d) => format(d, "yyyy-MM-dd"));
+    const dates = [
+      ...new Set(state.scheduleBlocks.map((b) => b.date)),
+    ].sort();
+    expect(dates).toEqual(expected);
+    expect(dates[0]).toBe("2026-08-10");
+    expect(dates[6]).toBe("2026-08-16");
   });
 });
 
