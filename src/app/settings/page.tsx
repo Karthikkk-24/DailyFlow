@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useDayFlow } from "@/context/dayflow-provider";
 import { Card, PageHeader } from "@/components/ui/card";
@@ -27,6 +27,21 @@ export default function SettingsPage() {
   const [keepName, setKeepName] = useState(true);
   const [importError, setImportError] = useState("");
   const [pendingImport, setPendingImport] = useState<AppState | null>(null);
+
+  // Resync after import/reset (or any external profile update) without requiring remount.
+  useEffect(() => {
+    setName(state.profile.name);
+    setPrimaryGoal(state.profile.primaryGoal);
+    setStart(state.profile.workingHours.start);
+    setEnd(state.profile.workingHours.end);
+    setEnergy(state.profile.energyPattern);
+  }, [
+    state.profile.name,
+    state.profile.primaryGoal,
+    state.profile.workingHours.start,
+    state.profile.workingHours.end,
+    state.profile.energyPattern,
+  ]);
 
   function saveProfile() {
     if (!name.trim()) {
