@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 
 export default function AppError({
@@ -10,6 +11,8 @@ export default function AppError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const router = useRouter();
+
   useEffect(() => {
     console.error("DayFlow route error:", error);
   }, [error]);
@@ -28,7 +31,7 @@ export default function AppError({
       ) : null}
       <div className="mt-6 flex flex-wrap justify-center gap-2">
         <Button onClick={reset}>Try again</Button>
-        <Button variant="secondary" onClick={() => { window.location.href = "/today"; }}>
+        <Button variant="secondary" onClick={() => router.push("/today")}>
           Go to Today
         </Button>
       </div>
