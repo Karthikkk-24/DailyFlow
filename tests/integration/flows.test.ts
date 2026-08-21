@@ -96,3 +96,33 @@ describe("integration: habit toggle → streak", () => {
     ).toHaveLength(3);
   });
 });
+
+describe("integration: undo complete restores previous status", () => {
+  it("restores in_progress when undoing completion", () => {
+    const base = createSeededState();
+    const task = base.tasks[0];
+    const withProgress = {
+      ...base,
+      tasks: base.tasks.map((t) =>
+        t.id === task.id ? { ...t, status: "in_progress" as const } : t,
+      ),
+    };
+    const done = dayFlowReducer(withProgress, {
+      type: "MOVE_TASK",
+      id: task.id,
+      status: "done",
+    });
+    expect(done.tasks.find((t) => t.id === task.id)?.previousStatus).toBe(
+      "in_progress",
+    );
+    const undone = dayFlowReducer(done, {
+      type: "MOVE_TASK",
+      id: task.id,
+      status: "in_progress",
+    });
+    const restored = undone.tasks.find((t) => t.id === task.id);
+    expect(restored?.status).toBe("in_progress");
+    expect(restored?.previousStatus).toBeUndefined();
+    expect(restored?.completedAt).toBeUndefined();
+  });
+});

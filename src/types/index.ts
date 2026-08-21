@@ -43,6 +43,8 @@ export interface Task {
   dueDate?: string;
   dueTime?: string;
   completedAt?: string;
+  /** Status before the last transition to done (for undo). */
+  previousStatus?: Exclude<TaskStatus, "done">;
   createdAt: string;
   updatedAt: string;
   order: number;

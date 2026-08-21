@@ -137,8 +137,12 @@ export function dayFlowReducer(
         };
         if (action.status === "done") {
           patch.completedAt = nowIso();
+          if (t.status !== "done") {
+            patch.previousStatus = t.status;
+          }
         } else if (t.status === "done") {
           patch.completedAt = undefined;
+          patch.previousStatus = undefined;
         }
         return { ...t, ...patch };
       });
