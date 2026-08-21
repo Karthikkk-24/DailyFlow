@@ -6,7 +6,7 @@ import { Pause, Play, RotateCcw, X } from "lucide-react";
 import { useDayFlow } from "@/context/dayflow-provider";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select } from "@/components/ui/input";
-import { cn, nowIso } from "@/lib/utils";
+import { cn, focusMinutesForEnergy, nowIso } from "@/lib/utils";
 import { useToast } from "@/components/ui/toast";
 
 type TimerState = "idle" | "running" | "paused" | "completed";
@@ -72,12 +72,12 @@ function playTick() {
   }
 }
 
-function initialFocusState() {
+function initialFocusState(defaultMinutes = 25) {
   const saved = readSavedFocus();
   if (!saved) {
     return {
-      minutes: 25,
-      remaining: 25 * 60,
+      minutes: defaultMinutes,
+      remaining: defaultMinutes * 60,
       timerState: "idle" as TimerState,
       endAt: null as number | null,
       startedAt: null as string | null,
@@ -114,7 +114,9 @@ function initialFocusState() {
 export default function FocusPage() {
   const { state, dispatch } = useDayFlow();
   const { push } = useToast();
-  const [boot] = useState(() => initialFocusState());
+  const [boot] = useState(() =>
+    initialFocusState(focusMinutesForEnergy(state.profile.energyPattern)),
+  );
   const [minutes, setMinutes] = useState(boot.minutes);
   const [remaining, setRemaining] = useState(boot.remaining);
   const [timerState, setTimerState] = useState<TimerState>(boot.timerState);

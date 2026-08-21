@@ -8,7 +8,7 @@ import { parseImportJson } from "@/lib/storage";
 import { createSeededState } from "@/lib/seed/demo-data";
 import type { AppState, Habit, HabitLog } from "@/types";
 import { format, subDays } from "date-fns";
-import { weekDates } from "@/lib/utils";
+import { energyGuidance, focusMinutesForEnergy, weekDates } from "@/lib/utils";
 
 describe("goalProgress", () => {
   it("returns 0 for empty milestones", () => {
@@ -197,5 +197,17 @@ describe("rebuildHistorySnapshots", () => {
       )
       .reduce((n, s) => n + s.durationMinutes, 0);
     expect(snap?.focusMinutes).toBe(expected);
+  });
+});
+
+describe("energyPattern helpers", () => {
+  it("maps energy patterns to Focus defaults", () => {
+    expect(focusMinutesForEnergy("morning")).toBe(45);
+    expect(focusMinutesForEnergy("mixed")).toBe(30);
+  });
+
+  it("returns hour-aware guidance copy", () => {
+    expect(energyGuidance("morning", 9)).toMatch(/Morning energy/i);
+    expect(energyGuidance("evening", 10)).toMatch(/later/i);
   });
 });

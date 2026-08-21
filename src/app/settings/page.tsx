@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useDayFlow } from "@/context/dayflow-provider";
 import { Card, PageHeader } from "@/components/ui/card";
@@ -12,11 +12,28 @@ import { downloadJson, timeToMinutes, cn } from "@/lib/utils";
 import { backupCurrentState, parseImportJson } from "@/lib/storage";
 import type { AppState, EnergyPattern, ThemeMode } from "@/types";
 
+function profileSyncKey(profile: {
+  name: string;
+  primaryGoal: string;
+  workingHours: { start: string; end: string };
+  energyPattern: EnergyPattern;
+}) {
+  return [
+    profile.name,
+    profile.primaryGoal,
+    profile.workingHours.start,
+    profile.workingHours.end,
+    profile.energyPattern,
+  ].join("\0");
+}
+
 export default function SettingsPage() {
   const { state, dispatch } = useDayFlow();
   const { push } = useToast();
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
+  const syncKey = profileSyncKey(state.profile);
+  const [syncedKey, setSyncedKey] = useState(syncKey);
   const [name, setName] = useState(state.profile.name);
   const [primaryGoal, setPrimaryGoal] = useState(state.profile.primaryGoal);
   const [start, setStart] = useState(state.profile.workingHours.start);
@@ -28,20 +45,15 @@ export default function SettingsPage() {
   const [importError, setImportError] = useState("");
   const [pendingImport, setPendingImport] = useState<AppState | null>(null);
 
-  // Resync after import/reset (or any external profile update) without requiring remount.
-  useEffect(() => {
+  // Resync after import/reset without an effect (React “adjust state during render”).
+  if (syncKey !== syncedKey) {
+    setSyncedKey(syncKey);
     setName(state.profile.name);
     setPrimaryGoal(state.profile.primaryGoal);
     setStart(state.profile.workingHours.start);
     setEnd(state.profile.workingHours.end);
     setEnergy(state.profile.energyPattern);
-  }, [
-    state.profile.name,
-    state.profile.primaryGoal,
-    state.profile.workingHours.start,
-    state.profile.workingHours.end,
-    state.profile.energyPattern,
-  ]);
+  }
 
   function saveProfile() {
     if (!name.trim()) {

@@ -1,4 +1,4 @@
-import type { AnalyticsSnapshot, FocusSession, Goal } from "@/types";
+import type { AnalyticsSnapshot, EnergyPattern, FocusSession, Goal } from "@/types";
 import { parseISO, subDays, format, getDay } from "date-fns";
 import { todayKey } from "@/lib/utils";
 import { goalProgress } from "@/lib/analytics/score";
@@ -84,6 +84,29 @@ export function mostProductiveHour(sessions: FocusSession[]): string {
   }
   const end = (best + 1) % 24;
   return `${String(best).padStart(2, "0")}:00–${String(end).padStart(2, "0")}:00`;
+}
+
+/** Compare declared energy pattern to observed best focus hour. */
+export function energyAlignmentNote(
+  pattern: EnergyPattern,
+  productiveHourLabel: string,
+): string {
+  if (productiveHourLabel === "—") {
+    return `Declared energy: ${pattern}. Complete a Focus session to compare.`;
+  }
+  const hour = Number.parseInt(productiveHourLabel.slice(0, 2), 10);
+  if (!Number.isFinite(hour)) {
+    return `Declared energy: ${pattern}.`;
+  }
+  const observed =
+    hour < 12 ? "morning" : hour < 17 ? "afternoon" : "evening";
+  if (pattern === "mixed") {
+    return `Best focus window ${productiveHourLabel} — matches a flexible energy pattern.`;
+  }
+  if (pattern === observed) {
+    return `Best focus window ${productiveHourLabel} aligns with your ${pattern} energy.`;
+  }
+  return `Best focus window ${productiveHourLabel}; you marked ${pattern} energy — consider shifting deep work.`;
 }
 
 export function sumFocusMinutes(snapshots: AnalyticsSnapshot[]) {
