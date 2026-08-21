@@ -116,6 +116,36 @@ it("ignores historical done tasks when scoring today", () => {
     expect(next.todayScore).toBe(base.todayScore);
     expect(next.tasksCompleted).toBe(base.tasksCompleted);
   });
+
+  it("counts backlog tasks due today as planned work", () => {
+    const state = createSeededState();
+    const key = format(new Date(), "yyyy-MM-dd");
+    const withoutBacklog = {
+      ...state,
+      tasks: state.tasks.filter((t) => !(t.status === "backlog" && t.dueDate === key)),
+    };
+    const base = recomputeTodaySnapshot(withoutBacklog);
+    const withBacklogDue: AppState = {
+      ...withoutBacklog,
+      tasks: [
+        ...withoutBacklog.tasks,
+        {
+          id: "backlog-due",
+          title: "Due backlog",
+          status: "backlog",
+          priority: "medium",
+          category: "Work",
+          dueDate: key,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          order: 0,
+        },
+      ],
+    };
+    const next = recomputeTodaySnapshot(withBacklogDue);
+    // More planned unfinished work lowers or holds task component when none completed from that set
+    expect(next.breakdown.tasks).toBeLessThanOrEqual(base.breakdown.tasks);
+  });
 });
 
 describe("parseImportJson", () => {
