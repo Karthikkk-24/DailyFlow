@@ -1,4 +1,4 @@
-import type { AppState, Habit, HabitLog } from "@/types";
+import type { AnalyticsSnapshot, AppState, Habit, HabitLog } from "@/types";
 import { parseISO, subDays, format, getDay } from "date-fns";
 import { todayKey } from "@/lib/utils";
 
@@ -24,40 +24,7 @@ export function computeStreak(
   asOf = new Date(),
 ): { current: number; best: number } {
   let current = 0;
-  let best = 0;
-  let run = 0;
 
-  // Walk back ~400 days for best streak; current breaks on first miss
-  for (let i = 0; i < 400; i++) {
-    const day = subDays(asOf, i);
-    const key = format(day, "yyyy-MM-dd");
-    if (!isHabitDueOn(habit, day)) continue;
-
-    const done = isHabitCompletedOn(habit.id, key, logs);
-    if (done) {
-      run += 1;
-      best = Math.max(best, run);
-      if (i === current || (current === 0 && i === 0) || run === current + 1) {
-        // continue building current from today backward
-      }
-    } else {
-      if (i === 0 || (current === 0 && run === 0 && key === todayKey(asOf))) {
-        // miss today — current stays 0 until we find consecutive past
-      }
-      if (current === 0 && run > 0 && i > 0) {
-        current = run;
-      }
-      if (current > 0 || i > 0) {
-        if (current === 0) current = run;
-        run = 0;
-        if (current > 0 && i > 0) break;
-      }
-      run = 0;
-    }
-  }
-
-  // Simpler accurate walk for current streak
-  current = 0;
   for (let i = 0; i < 400; i++) {
     const day = subDays(asOf, i);
     const key = format(day, "yyyy-MM-dd");
@@ -71,8 +38,7 @@ export function computeStreak(
     }
   }
 
-  // Best streak: scan all logs chronologically
-  best = Math.max(best, current);
+  let best = current;
   const habitLogs = logs
     .filter((l) => l.habitId === habit.id && l.completed)
     .map((l) => l.date)
@@ -209,7 +175,7 @@ export function recomputeTodaySnapshot(state: AppState, date = new Date()) {
 }
 
 export function upsertTodaySnapshot(state: AppState): AppState {
-  const { breakdown: _breakdown, ...snap } = recomputeTodaySnapshot(state);
+  const snap = toAnalyticsSnapshot(recomputeTodaySnapshot(state));
   const others = state.analyticsSnapshots.filter((s) => s.date !== snap.date);
   return {
     ...state,
@@ -233,11 +199,24 @@ export function rebuildHistorySnapshots(
     if (i > 0) {
       at.setHours(23, 59, 59, 999);
     }
-    const { breakdown: _b, ...snap } = recomputeTodaySnapshot(state, at);
-    snaps.push(snap);
+    snaps.push(toAnalyticsSnapshot(recomputeTodaySnapshot(state, at)));
   }
   return {
     ...state,
     analyticsSnapshots: snaps.sort((a, b) => a.date.localeCompare(b.date)),
+  };
+}
+
+function toAnalyticsSnapshot(
+  snap: ReturnType<typeof recomputeTodaySnapshot>,
+): AnalyticsSnapshot {
+  return {
+    date: snap.date,
+    tasksCompleted: snap.tasksCompleted,
+    habitsCompleted: snap.habitsCompleted,
+    habitsTotal: snap.habitsTotal,
+    focusMinutes: snap.focusMinutes,
+    scheduleBlocksCompleted: snap.scheduleBlocksCompleted,
+    todayScore: snap.todayScore,
   };
 }
