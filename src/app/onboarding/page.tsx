@@ -193,18 +193,40 @@ export default function OnboardingPage() {
               aria-labelledby="energy-heading"
               className="grid gap-2 sm:grid-cols-2"
             >
-              {ENERGY.map((opt) => (
+              {ENERGY.map((opt, index) => (
                 <button
                   key={opt.value}
                   type="button"
                   role="radio"
                   aria-checked={energy === opt.value}
+                  tabIndex={energy === opt.value ? 0 : -1}
                   onClick={() => setEnergy(opt.value)}
                   onKeyDown={(e) => {
                     if (e.key === " " || e.key === "Enter") {
                       e.preventDefault();
                       setEnergy(opt.value);
+                      return;
                     }
+                    const last = ENERGY.length - 1;
+                    let next = index;
+                    if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+                      next = index === last ? 0 : index + 1;
+                    } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+                      next = index === 0 ? last : index - 1;
+                    } else if (e.key === "Home") {
+                      next = 0;
+                    } else if (e.key === "End") {
+                      next = last;
+                    } else {
+                      return;
+                    }
+                    e.preventDefault();
+                    setEnergy(ENERGY[next]!.value);
+                    const radios =
+                      e.currentTarget.parentElement?.querySelectorAll<HTMLElement>(
+                        '[role="radio"]',
+                      );
+                    radios?.[next]?.focus();
                   }}
                   className={cn(
                     "rounded-xl border p-4 text-left transition",
