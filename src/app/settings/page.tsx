@@ -53,6 +53,7 @@ export default function SettingsPage() {
   const [end, setEnd] = useState(state.profile.workingHours.end);
   const [energy, setEnergy] = useState(state.profile.energyPattern);
   const [desiredHabits, setDesiredHabits] = useState<string[]>(state.profile.desiredHabits);
+  const [customHabit, setCustomHabit] = useState("");
   const [error, setError] = useState("");
   const [resetOpen, setResetOpen] = useState(false);
   const [keepName, setKeepName] = useState(true);
@@ -235,6 +236,55 @@ export default function SettingsPage() {
                     </button>
                   );
                 })}
+                {desiredHabits
+                  .filter((h) => !HABIT_PRESETS.includes(h))
+                  .map((h) => (
+                    <button
+                      key={h}
+                      type="button"
+                      onClick={() =>
+                        setDesiredHabits((prev) => prev.filter((x) => x !== h))
+                      }
+                      className="rounded-full border border-primary bg-primary px-3 py-1.5 text-sm text-primary-foreground transition"
+                      title="Remove custom habit"
+                    >
+                      {h} ×
+                    </button>
+                  ))}
+              </div>
+              <div className="mt-2 flex gap-2">
+                <Input
+                  value={customHabit}
+                  onChange={(e) => setCustomHabit(e.target.value)}
+                  placeholder="Add a custom habit"
+                  maxLength={80}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && customHabit.trim()) {
+                      e.preventDefault();
+                      const name = customHabit.trim();
+                      setDesiredHabits((prev) => {
+                        if (prev.includes(name) || prev.length >= 20) return prev;
+                        return [...prev, name];
+                      });
+                      setCustomHabit("");
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => {
+                    if (!customHabit.trim()) return;
+                    const name = customHabit.trim();
+                    setDesiredHabits((prev) => {
+                      if (prev.includes(name) || prev.length >= 20) return prev;
+                      return [...prev, name];
+                    });
+                    setCustomHabit("");
+                  }}
+                >
+                  Add
+                </Button>
               </div>
             </div>
             <Button onClick={saveProfile}>Save profile</Button>
