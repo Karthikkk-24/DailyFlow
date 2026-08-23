@@ -10,7 +10,7 @@ import type {
   UserProfile,
 } from "@/types";
 import { createId, nowIso, todayKey } from "@/lib/utils";
-import { upsertTodaySnapshot, upsertSnapshotForDate } from "@/lib/analytics/score";
+import { upsertTodaySnapshot, upsertSnapshotForDate, rebuildHistorySnapshots } from "@/lib/analytics/score";
 import { createSeededState, personalizeAfterOnboarding } from "@/lib/seed/demo-data";
 
 export type DayFlowAction =
@@ -59,8 +59,8 @@ export function dayFlowReducer(
   switch (action.type) {
     case "HYDRATE":
     case "REPLACE_STATE":
-      // Refresh today's analytics row so charts aren't stale until the next mutation.
-      return upsertTodaySnapshot(action.state);
+      // Rebuild recent history from entities so Analytics matches imported/loaded data.
+      return rebuildHistorySnapshots(action.state, 30);
 
     case "COMPLETE_ONBOARDING":
       return withSnapshot(personalizeAfterOnboarding(state, action.profile));
