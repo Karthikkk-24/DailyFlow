@@ -141,7 +141,7 @@ export function goalProgressOverTime(
   series: { key: string; name: string; color: string }[];
 } {
   const tracked = goals
-    .filter((g) => g.status === "active" || g.status === "completed")
+    .filter((g) => g.status === "active" || g.status === "completed" || g.status === "paused")
     .slice(0, 5);
 
   const series = tracked.map((g, i) => ({
