@@ -175,15 +175,31 @@ export function recomputeTodaySnapshot(state: AppState, date = new Date()) {
 
 const MAX_ANALYTICS_SNAPSHOTS = 400;
 
-export function upsertTodaySnapshot(state: AppState): AppState {
-  const snap = toAnalyticsSnapshot(recomputeTodaySnapshot(state));
+/** Upsert the analytics row for a specific calendar day (end-of-day for past dates). */
+export function upsertSnapshotForDate(
+  state: AppState,
+  dateKey: string,
+  asOf = new Date(),
+): AppState {
+  const today = todayKey(asOf);
+  const at = parseISO(dateKey);
+  if (dateKey !== today) {
+    at.setHours(23, 59, 59, 999);
+  } else {
+    // Align wall-clock with "asOf" so schedule scoring matches the live day.
+    at.setHours(asOf.getHours(), asOf.getMinutes(), asOf.getSeconds(), asOf.getMilliseconds());
+  }
+  const snap = toAnalyticsSnapshot(recomputeTodaySnapshot(state, at));
   const others = state.analyticsSnapshots.filter((s) => s.date !== snap.date);
   const next = [...others, snap].sort((a, b) => a.date.localeCompare(b.date));
   return {
     ...state,
-    // Keep the newest snapshots within the schema max so export/import stay valid.
     analyticsSnapshots: next.slice(-MAX_ANALYTICS_SNAPSHOTS),
   };
+}
+
+export function upsertTodaySnapshot(state: AppState): AppState {
+  return upsertSnapshotForDate(state, todayKey());
 }
 
 /** Rebuild daily snapshots from entities for the last N days (inclusive of today). */
