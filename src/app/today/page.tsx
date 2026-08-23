@@ -59,19 +59,29 @@ export default function TodayPage() {
   const greeting = greetingForHour(hour);
   const energyTip = energyGuidance(state.profile.energyPattern, hour);
 
+  const isOverdueBacklog = (t: (typeof state.tasks)[number]) =>
+    t.status === "backlog" && !!t.dueDate && t.dueDate < today;
+
   const todayTasks = state.tasks
     .filter(
       (t) =>
         t.status === "today" ||
         t.status === "in_progress" ||
         (t.dueDate === today && t.status !== "done") ||
+        isOverdueBacklog(t) ||
         (t.status === "done" &&
           !!t.completedAt &&
           todayKey(parseISO(t.completedAt)) === today),
     )
     .sort((a, b) => {
-      const rank = { in_progress: 0, today: 1, done: 2, backlog: 3 };
-      return rank[a.status] - rank[b.status] || a.order - b.order;
+      const rank = (t: (typeof state.tasks)[number]) => {
+        if (t.status === "in_progress") return 0;
+        if (t.status === "today") return 1;
+        if (isOverdueBacklog(t)) return 2;
+        if (t.status === "done") return 3;
+        return 4;
+      };
+      return rank(a) - rank(b) || a.order - b.order;
     });
 
   const blocks = state.scheduleBlocks
@@ -257,6 +267,9 @@ export default function TodayPage() {
                     {task.title}
                   </p>
                   <div className="mt-1 flex flex-wrap gap-1.5">
+                    {isOverdueBacklog(task) && (
+                      <Badge tone="danger">Overdue</Badge>
+                    )}
                     <Badge tone={task.priority}>{task.priority}</Badge>
                     <Badge>{task.category}</Badge>
                     {task.dueTime && (
