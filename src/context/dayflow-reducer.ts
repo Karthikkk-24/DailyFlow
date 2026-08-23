@@ -11,6 +11,7 @@ import type {
 } from "@/types";
 import { createId, nowIso, todayKey } from "@/lib/utils";
 import { upsertTodaySnapshot, upsertSnapshotForDate, rebuildHistorySnapshots } from "@/lib/analytics/score";
+import { MAX_HABITS } from "@/schemas/app-state.schema";
 import { createSeededState, personalizeAfterOnboarding, habitsMissingFromDesired, syncDeepWorkBlocksForWorkingHours } from "@/lib/seed/demo-data";
 
 export type DayFlowAction =
@@ -80,10 +81,12 @@ export function dayFlowReducer(
 
     case "UPDATE_PROFILE": {
       const profile = { ...state.profile, ...action.profile };
-      const newHabits =
+      const missingHabits =
         action.profile.desiredHabits !== undefined
           ? habitsMissingFromDesired(state.habits, profile.desiredHabits)
           : [];
+      const room = Math.max(0, MAX_HABITS - state.habits.length);
+      const newHabits = missingHabits.slice(0, room);
       const hoursChanged =
         action.profile.workingHours !== undefined &&
         (action.profile.workingHours.start !== state.profile.workingHours.start ||
@@ -226,6 +229,7 @@ export function dayFlowReducer(
     }
 
     case "ADD_HABIT": {
+      if (state.habits.length >= MAX_HABITS) return state;
       const habit: Habit = {
         ...action.habit,
         id: createId("hab"),
