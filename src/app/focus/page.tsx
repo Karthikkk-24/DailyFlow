@@ -131,6 +131,8 @@ export default function FocusPage() {
   const endAt = useRef<number | null>(boot.endAt);
   const pendingComplete = useRef(boot.pendingComplete);
   const lastTickSecond = useRef<number | null>(null);
+  const remainingRef = useRef(boot.remaining);
+  remainingRef.current = remaining;
 
   const formatTime = (secs: number) => {
     const m = Math.floor(secs / 60);
@@ -140,7 +142,10 @@ export default function FocusPage() {
 
   const complete = useCallback(() => {
     setTimerState("completed");
-    const duration = minutes;
+    // Focused time = planned − remaining (pause freezes remaining).
+    // Use a ref so the timer tick that hits 0 isn't racing React state.
+    const focusedSeconds = Math.max(0, minutes * 60 - remainingRef.current);
+    const duration = Math.max(1, Math.round(focusedSeconds / 60));
     dispatch({
       type: "COMPLETE_FOCUS",
       session: {
@@ -186,6 +191,7 @@ export default function FocusPage() {
     const id = window.setInterval(() => {
       if (!endAt.current) return;
       const left = Math.max(0, Math.round((endAt.current - Date.now()) / 1000));
+      remainingRef.current = left;
       setRemaining(left);
       if (
         state.meta.focusTickSound &&
@@ -240,8 +246,12 @@ export default function FocusPage() {
     sessionStorage.removeItem(FOCUS_KEY);
   }
 
+  const sessionActive =
+    timerState === "running" || timerState === "paused";
+
   function pickPreset(m: number) {
-    if (timerState === "running") return;
+    // Lock duration once a session has started (running or paused).
+    if (sessionActive) return;
     setUsingCustom(false);
     setMinutes(m);
     setRemaining(m * 60);
@@ -249,7 +259,7 @@ export default function FocusPage() {
   }
 
   function applyCustom() {
-    if (timerState === "running") return;
+    if (sessionActive) return;
     const m = clampCustomMinutes(Number(customDraft));
     setCustomDraft(String(m));
     setUsingCustom(true);
