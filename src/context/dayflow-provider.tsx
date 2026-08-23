@@ -63,8 +63,11 @@ export function DayFlowProvider({ children }: { children: ReactNode }) {
   const lastPersisted = useRef<AppState | null>(null);
   const persistBlocked = useRef(false);
   const stateRef = useRef(state);
-  stateRef.current = state;
   const pendingSave = useRef(false);
+
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
 
   const applySaveResult = useCallback((toSave: AppState, result: ReturnType<typeof saveState>) => {
     if (!result.error) {

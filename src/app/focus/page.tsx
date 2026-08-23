@@ -123,6 +123,7 @@ export default function FocusPage() {
     PRESETS.includes(boot.minutes) ? "30" : String(boot.minutes),
   );
   const [usingCustom, setUsingCustom] = useState(!PRESETS.includes(boot.minutes));
+  const [energyPattern, setEnergyPattern] = useState(state.profile.energyPattern);
   const startedAt = useRef<string | null>(boot.startedAt);
   const endAt = useRef<number | null>(boot.endAt);
   const pendingComplete = useRef(boot.pendingComplete);
@@ -133,32 +134,28 @@ export default function FocusPage() {
     remainingRef.current = remaining;
   }, [remaining]);
 
-  // Drop links when the task/goal was deleted while Focus is open.
-  useEffect(() => {
-    if (taskId && !state.tasks.some((t) => t.id === taskId)) {
-      setTaskId("");
-    }
-    if (goalId && !state.goals.some((g) => g.id === goalId)) {
-      setGoalId("");
-    }
-  }, [state.tasks, state.goals, taskId, goalId]);
+  // Drop links when the task/goal was deleted while Focus is open (adjust during render).
+  if (taskId && !state.tasks.some((t) => t.id === taskId)) {
+    setTaskId("");
+  }
+  if (goalId && !state.goals.some((g) => g.id === goalId)) {
+    setGoalId("");
+  }
 
   // Sync idle default minutes when Settings energy pattern changes (not mid-session).
-  const skipEnergyDefaultSync = useRef(true);
-  useEffect(() => {
-    if (skipEnergyDefaultSync.current) {
-      skipEnergyDefaultSync.current = false;
-      return;
-    }
-    if (timerState !== "idle") return;
+  if (
+    state.profile.energyPattern !== energyPattern &&
+    timerState === "idle"
+  ) {
+    setEnergyPattern(state.profile.energyPattern);
     const next = focusMinutesForEnergy(state.profile.energyPattern);
     setMinutes(next);
     setRemaining(next * 60);
     setUsingCustom(!PRESETS.includes(next));
     if (!PRESETS.includes(next)) setCustomDraft(String(next));
-    // Intentionally omit timerState: only react to energyPattern changes.
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- see above
-  }, [state.profile.energyPattern]);
+  } else if (state.profile.energyPattern !== energyPattern) {
+    setEnergyPattern(state.profile.energyPattern);
+  }
 
   const formatTime = (secs: number) => {
     const m = Math.floor(secs / 60);

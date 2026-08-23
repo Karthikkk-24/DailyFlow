@@ -27,7 +27,7 @@ import {
 import { computeStreak, goalProgress, recomputeTodaySnapshot } from "@/lib/analytics/score";
 import { useTodayKey } from "@/hooks/use-today-key";
 import { format, parseISO } from "date-fns";
-import { cn } from "@/lib/utils";
+import { cn, todayKey } from "@/lib/utils";
 import type { AnalyticsSnapshot } from "@/types";
 
 function toSnapshot(
@@ -52,7 +52,12 @@ export default function AnalyticsPage() {
   const data = useMemo(() => {
     // Overlay a live "today" row so overnight tabs don't keep yesterday's point
     // until the next mutation persists a snapshot.
-    const liveToday = toSnapshot(recomputeTodaySnapshot(state));
+    // Bind to `today` so overnight tabs refresh; keep wall-clock when still today.
+    const asOf = new Date();
+    if (todayKey(asOf) !== today) {
+      asOf.setTime(Date.parse(`${today}T12:00:00`));
+    }
+    const liveToday = toSnapshot(recomputeTodaySnapshot(state, asOf));
     const merged = [
       ...state.analyticsSnapshots.filter((s) => s.date !== liveToday.date),
       liveToday,

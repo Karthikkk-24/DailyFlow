@@ -161,7 +161,6 @@ export default function TasksPage() {
     if (task) openEdit(task);
     // Strip the query so refresh doesn't reopen forever.
     window.history.replaceState(null, "", "/tasks");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, state.tasks]);
 
   useEffect(() => {
