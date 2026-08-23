@@ -35,6 +35,47 @@ export function deepWorkBlocksForWorkingHours(profile: UserProfile): ScheduleBlo
     }));
 }
 
+/** Patch or add current-week "Deep work" blocks to match working hours. */
+export function syncDeepWorkBlocksForWorkingHours(
+  blocks: ScheduleBlock[],
+  profile: UserProfile,
+): ScheduleBlock[] {
+  const seeded = deepWorkBlocksForWorkingHours(profile);
+  if (seeded.length === 0) return blocks;
+  const byDate = new Map(seeded.map((b) => [b.date, b]));
+  const weekDateSet = new Set(byDate.keys());
+
+  const updated = blocks.map((b) => {
+    if (
+      b.category !== "deep_work" ||
+      b.title !== "Deep work" ||
+      !weekDateSet.has(b.date)
+    ) {
+      return b;
+    }
+    const seed = byDate.get(b.date)!;
+    return {
+      ...b,
+      startTime: seed.startTime,
+      endTime: seed.endTime,
+      notes: seed.notes,
+    };
+  });
+
+  const existingDates = new Set(
+    updated
+      .filter(
+        (b) =>
+          b.category === "deep_work" &&
+          b.title === "Deep work" &&
+          weekDateSet.has(b.date),
+      )
+      .map((b) => b.date),
+  );
+  const toAdd = seeded.filter((b) => !existingDates.has(b.date));
+  return toAdd.length ? [...updated, ...toAdd] : updated;
+}
+
 function defaultProfile(overrides?: Partial<UserProfile>): UserProfile {
   return {
     name: "Alex",

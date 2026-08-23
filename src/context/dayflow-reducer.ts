@@ -11,7 +11,7 @@ import type {
 } from "@/types";
 import { createId, nowIso, todayKey } from "@/lib/utils";
 import { upsertTodaySnapshot, upsertSnapshotForDate, rebuildHistorySnapshots } from "@/lib/analytics/score";
-import { createSeededState, personalizeAfterOnboarding, habitsMissingFromDesired } from "@/lib/seed/demo-data";
+import { createSeededState, personalizeAfterOnboarding, habitsMissingFromDesired, syncDeepWorkBlocksForWorkingHours } from "@/lib/seed/demo-data";
 
 export type DayFlowAction =
   | { type: "HYDRATE"; state: AppState }
@@ -83,10 +83,18 @@ export function dayFlowReducer(
         action.profile.desiredHabits !== undefined
           ? habitsMissingFromDesired(state.habits, profile.desiredHabits)
           : [];
+      const hoursChanged =
+        action.profile.workingHours !== undefined &&
+        (action.profile.workingHours.start !== state.profile.workingHours.start ||
+          action.profile.workingHours.end !== state.profile.workingHours.end);
+      const scheduleBlocks = hoursChanged
+        ? syncDeepWorkBlocksForWorkingHours(state.scheduleBlocks, profile)
+        : state.scheduleBlocks;
       return touch({
         ...state,
         profile,
         habits: newHabits.length ? [...state.habits, ...newHabits] : state.habits,
+        scheduleBlocks,
       });
     }
 
