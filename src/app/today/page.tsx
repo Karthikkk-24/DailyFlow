@@ -51,7 +51,8 @@ export default function TodayPage() {
   const [error, setError] = useState("");
 
   const today = useTodayKey();
-  const snap = useMemo(() => recomputeTodaySnapshot(state), [state]);
+  // Recompute when the calendar day advances (lists already depend on `today`).
+  const snap = useMemo(() => recomputeTodaySnapshot(state), [state, today]);
   const hour = new Date().getHours();
   const greeting = greetingForHour(hour);
   const energyTip = energyGuidance(state.profile.energyPattern, hour);
