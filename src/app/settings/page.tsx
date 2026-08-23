@@ -80,7 +80,7 @@ export default function SettingsPage() {
       setError("End time must be after start time.");
       return;
     }
-    dispatch({
+    const saved = dispatch({
       type: "UPDATE_PROFILE",
       profile: {
         name: name.trim(),
@@ -90,6 +90,13 @@ export default function SettingsPage() {
         desiredHabits,
       },
     });
+    if (!saved) {
+      push(
+        "Could not save profile — storage is full. Export your data or reset demo.",
+        "error",
+      );
+      return;
+    }
     setError("");
     push("Profile saved", "success");
   }
