@@ -41,6 +41,10 @@ function isQuotaError(message: string | null) {
   return !!message && /storage is full/i.test(message);
 }
 
+function isValidationError(message: string | null) {
+  return !!message && /Could not save — data is invalid/.test(message);
+}
+
 const ALLOW_WHILE_BLOCKED = new Set<DayFlowAction["type"]>([
   "HYDRATE",
   "REPLACE_STATE",
@@ -89,6 +93,9 @@ export function DayFlowProvider({ children }: { children: ReactNode }) {
       } else {
         persistBlocked.current = true;
       }
+    } else if (isValidationError(result.error) && lastPersisted.current) {
+      skipSave.current = true;
+      dispatch({ type: "HYDRATE", state: lastPersisted.current });
     }
   }, []);
 
