@@ -23,6 +23,15 @@ function HabitIcon({ name, className }: { name: string; className?: string }) {
 }
 
 const DAY_LABELS = ["S", "M", "T", "W", "T", "F", "S"];
+const DAY_NAMES = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+];
 
 export type HabitFormValues = {
   name: string;
@@ -158,21 +167,26 @@ function HabitFormFields({
         <div>
           <Label>Target days</Label>
           <div className="mt-1 flex gap-1">
-            {DAY_LABELS.map((label, i) => (
+            {DAY_LABELS.map((label, i) => {
+              const pressed = targetDays.includes(i);
+              return (
               <button
                 key={`${label}-${i}`}
                 type="button"
                 onClick={() => toggleDay(i)}
+                aria-label={DAY_NAMES[i]}
+                aria-pressed={pressed}
                 className={cn(
                   "h-9 w-9 rounded-lg text-sm font-medium",
-                  targetDays.includes(i)
+                  pressed
                     ? "bg-primary text-primary-foreground"
                     : "bg-muted text-muted-foreground",
                 )}
               >
                 {label}
               </button>
-            ))}
+            );
+            })}
           </div>
         </div>
       )}
