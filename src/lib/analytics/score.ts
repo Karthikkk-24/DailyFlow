@@ -173,14 +173,16 @@ export function recomputeTodaySnapshot(state: AppState, date = new Date()) {
   };
 }
 
+const MAX_ANALYTICS_SNAPSHOTS = 400;
+
 export function upsertTodaySnapshot(state: AppState): AppState {
   const snap = toAnalyticsSnapshot(recomputeTodaySnapshot(state));
   const others = state.analyticsSnapshots.filter((s) => s.date !== snap.date);
+  const next = [...others, snap].sort((a, b) => a.date.localeCompare(b.date));
   return {
     ...state,
-    analyticsSnapshots: [...others, snap].sort((a, b) =>
-      a.date.localeCompare(b.date),
-    ),
+    // Keep the newest snapshots within the schema max so export/import stay valid.
+    analyticsSnapshots: next.slice(-MAX_ANALYTICS_SNAPSHOTS),
   };
 }
 
