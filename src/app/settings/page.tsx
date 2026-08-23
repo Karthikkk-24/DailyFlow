@@ -114,7 +114,19 @@ export default function SettingsPage() {
   function confirmImport() {
     if (!pendingImport) return;
     backupCurrentState();
-    dispatch({ type: "REPLACE_STATE", state: pendingImport });
+    const hasEntities =
+      pendingImport.tasks.length > 0 ||
+      pendingImport.habits.length > 0 ||
+      pendingImport.goals.length > 0 ||
+      pendingImport.scheduleBlocks.length > 0 ||
+      pendingImport.focusSessions.length > 0;
+    const imported: AppState = hasEntities
+      ? {
+          ...pendingImport,
+          meta: { ...pendingImport.meta, onboardingCompleted: true },
+        }
+      : pendingImport;
+    dispatch({ type: "REPLACE_STATE", state: imported });
     setPendingImport(null);
     push("Data imported successfully", "success");
   }
