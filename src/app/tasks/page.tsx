@@ -25,7 +25,8 @@ import { Badge, EmptyState, PageHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FieldError, Input, Label, Select, Textarea } from "@/components/ui/input";
 import { ConfirmDialog, Modal } from "@/components/ui/modal";
-import { cn, todayKey } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { useTodayKey } from "@/hooks/use-today-key";
 import {
   TASK_CATEGORIES,
   type Task,
@@ -151,6 +152,7 @@ export default function TasksPage() {
   const [error, setError] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const searchParams = useSearchParams();
+  const today = useTodayKey();
 
   useEffect(() => {
     const editId = searchParams.get("edit");
@@ -174,7 +176,6 @@ export default function TasksPage() {
 
   const filtered = useMemo(() => {
     const q = debouncedQuery.trim().toLowerCase();
-    const today = todayKey();
     return state.tasks
       .filter((t) => {
         if (q && !t.title.toLowerCase().includes(q) && !(t.description ?? "").toLowerCase().includes(q))
@@ -194,11 +195,11 @@ export default function TasksPage() {
         return true;
       })
       .sort((a, b) => a.order - b.order);
-  }, [state.tasks, debouncedQuery, priority, category, status, due, dueFrom, dueTo]);
+  }, [state.tasks, debouncedQuery, priority, category, status, due, dueFrom, dueTo, today]);
 
   function openCreate() {
     setEditing(null);
-    setForm({ ...emptyForm, dueDate: todayKey() });
+    setForm({ ...emptyForm, dueDate: today });
     setError("");
     setModalOpen(true);
   }

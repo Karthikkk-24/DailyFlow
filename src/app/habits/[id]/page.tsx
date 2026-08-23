@@ -13,7 +13,8 @@ import {
   HabitFormModal,
   type HabitFormValues,
 } from "@/components/habits/habit-form-modal";
-import { cn, todayKey } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { useTodayKey } from "@/hooks/use-today-key";
 import {
   computeStreak,
   habitCompletionPercent,
@@ -27,14 +28,15 @@ export default function HabitDetailPage() {
   const { state, dispatch } = useDayFlow();
   const [confirm, setConfirm] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const today = useTodayKey();
 
   const habit = state.habits.find((h) => h.id === params.id);
 
   const grid = useMemo(() => {
     if (!habit) return [];
-    const today = startOfDay(new Date());
+    const todayDate = startOfDay(new Date(`${today}T12:00:00`));
     // 12 Monday-start calendar weeks ending with the week that contains today.
-    const rangeStart = startOfWeek(subWeeks(today, 11), { weekStartsOn: 1 });
+    const rangeStart = startOfWeek(subWeeks(todayDate, 11), { weekStartsOn: 1 });
     const cells: {
       date: string;
       due: boolean;
@@ -44,7 +46,7 @@ export default function HabitDetailPage() {
     for (let i = 0; i < 84; i++) {
       const d = addDays(rangeStart, i);
       const date = format(d, "yyyy-MM-dd");
-      const future = d > today;
+      const future = d > todayDate;
       cells.push({
         date,
         due: !future && isHabitDueOn(habit, d),
@@ -53,7 +55,7 @@ export default function HabitDetailPage() {
       });
     }
     return cells;
-  }, [habit, state.habitLogs]);
+  }, [habit, state.habitLogs, today]);
 
   if (!habit) {
     return (
@@ -70,9 +72,8 @@ export default function HabitDetailPage() {
 
   const { current, best } = computeStreak(habit, state.habitLogs);
   const pct = habitCompletionPercent(habit, state.habitLogs, 30);
-  const today = todayKey();
   const doneToday = isHabitCompletedOn(habit.id, today, state.habitLogs);
-  const dueToday = isHabitDueOn(habit, new Date());
+  const dueToday = isHabitDueOn(habit, new Date(`${today}T12:00:00`));
   const canToggleToday = dueToday || doneToday;
 
   function saveEdit(values: HabitFormValues) {
