@@ -27,6 +27,7 @@ import {
   timeToMinutes,
   minutesToTime,
 } from "@/lib/utils";
+import { useTodayKey } from "@/hooks/use-today-key";
 
 const HOURS = Array.from({ length: 16 }, (_, i) => i + 6); // 6..21
 const CATEGORY_COLORS: Record<BlockCategory, string> = {
@@ -128,7 +129,7 @@ function HourSlot({
 
 export default function PlannerPage() {
   const { state, dispatch } = useDayFlow();
-  const today = todayKey();
+  const today = useTodayKey();
   const [weekOffset, setWeekOffset] = useState(0);
   // Recompute when the local calendar day or week offset changes.
   const days = useMemo(

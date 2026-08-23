@@ -26,6 +26,7 @@ import {
   cn,
   timeToMinutes,
 } from "@/lib/utils";
+import { useTodayKey } from "@/hooks/use-today-key";
 import { parseISO } from "date-fns";
 import { recomputeTodaySnapshot, computeStreak, goalProgress, isHabitCompletedOn, habitsDueToday } from "@/lib/analytics/score";
 import { Modal } from "@/components/ui/modal";
@@ -47,7 +48,7 @@ export default function TodayPage() {
   const [title, setTitle] = useState("");
   const [error, setError] = useState("");
 
-  const today = todayKey();
+  const today = useTodayKey();
   const snap = useMemo(() => recomputeTodaySnapshot(state), [state]);
   const hour = new Date().getHours();
   const greeting = greetingForHour(hour);
