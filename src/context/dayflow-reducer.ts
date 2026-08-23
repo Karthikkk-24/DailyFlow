@@ -292,11 +292,11 @@ export function dayFlowReducer(
       const goals = state.goals.map((g) => {
         if (g.id !== action.id) return g;
         const next = { ...g, ...action.patch };
-        const allDone =
-          next.milestones.length > 0 &&
-          next.milestones.every((m) => m.completed);
-        // Keep status aligned with milestone completion whenever either changes.
-        if (action.patch.milestones || action.patch.status !== undefined) {
+
+        if (action.patch.milestones !== undefined) {
+          const allDone =
+            next.milestones.length > 0 &&
+            next.milestones.every((m) => m.completed);
           if (allDone && (next.status === "active" || next.status === "paused")) {
             next.reopenStatus = next.status;
             next.status = "completed";
@@ -304,9 +304,18 @@ export function dayFlowReducer(
             next.milestones.some((m) => !m.completed) &&
             next.status === "completed"
           ) {
-            // Cannot mark completed while milestones remain open.
             next.status = next.reopenStatus ?? "active";
             next.reopenStatus = undefined;
+          }
+        } else if (action.patch.status !== undefined) {
+          const openMilestones = next.milestones.some((m) => !m.completed);
+          if (action.patch.status === "completed" && openMilestones) {
+            next.status = g.status;
+          } else if (
+            g.status === "completed" &&
+            (action.patch.status === "active" || action.patch.status === "paused")
+          ) {
+            next.reopenStatus = action.patch.status;
           }
         }
         return next;
