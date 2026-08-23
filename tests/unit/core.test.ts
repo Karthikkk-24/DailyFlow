@@ -343,6 +343,7 @@ describe("focus session completion claim", () => {
   });
 
   it("claims completion only once across callers", async () => {
+    vi.resetModules();
     const {
       claimFocusCompletion,
       claimExpiredFocusSession,
@@ -362,7 +363,8 @@ describe("focus session completion claim", () => {
       }),
     );
 
-    expect(claimExpiredFocusSession()).not.toBeNull();
+    const expired = claimExpiredFocusSession();
+    expect(expired).not.toBeNull();
     expect(claimFocusCompletion()).toBe(false);
     expect(store.has(FOCUS_SESSION_KEY)).toBe(false);
   });
