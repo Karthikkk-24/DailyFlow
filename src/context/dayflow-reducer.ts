@@ -129,8 +129,7 @@ export function dayFlowReducer(
 
         if (t.status !== "today") return t;
         const dueBeforeToday = !!t.dueDate && t.dueDate < action.today;
-        const overnightNoDue = !t.dueDate && staleSinceYesterday;
-        if (!dueBeforeToday && !overnightNoDue) return t;
+        if (!dueBeforeToday && !staleSinceYesterday) return t;
         changed = true;
         return {
           ...t,
