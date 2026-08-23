@@ -28,6 +28,7 @@ import {
   minutesToTime,
 } from "@/lib/utils";
 import { useTodayKey } from "@/hooks/use-today-key";
+import { useToast } from "@/components/ui/toast";
 
 const HOURS = Array.from({ length: 16 }, (_, i) => i + 6); // 6..21
 const CATEGORY_COLORS: Record<BlockCategory, string> = {
@@ -49,6 +50,32 @@ function parseSlotId(id: string): { date: string; hour: number } | null {
   if (!date || Number.isNaN(hour)) return null;
   return { date, hour };
 }
+
+function rangesOverlap(aStart: number, aEnd: number, bStart: number, bEnd: number) {
+  return aStart < bEnd && bStart < aEnd;
+}
+
+function findOverlap(
+  blocks: ScheduleBlock[],
+  date: string,
+  startTime: string,
+  endTime: string,
+  excludeId?: string,
+) {
+  const startMin = timeToMinutes(startTime);
+  const endMin = timeToMinutes(endTime);
+  return blocks.find((b) => {
+    if (excludeId && b.id === excludeId) return false;
+    if (b.date !== date) return false;
+    return rangesOverlap(
+      startMin,
+      endMin,
+      timeToMinutes(b.startTime),
+      timeToMinutes(b.endTime),
+    );
+  });
+}
+
 
 function DraggableBlock({
   block,
@@ -129,6 +156,7 @@ function HourSlot({
 
 export default function PlannerPage() {
   const { state, dispatch } = useDayFlow();
+  const { push } = useToast();
   const [today] = useTodayKey();
   const [weekOffset, setWeekOffset] = useState(0);
   // Recompute when the local calendar day or week offset changes.
@@ -230,6 +258,18 @@ export default function PlannerPage() {
       setError("Blocks must stay within the visible grid (06:00–22:00).");
       return;
     }
+    if (
+      findOverlap(
+        state.scheduleBlocks,
+        form.date,
+        form.startTime,
+        form.endTime,
+        editing?.id,
+      )
+    ) {
+      setError("This time overlaps another block on the same day.");
+      return;
+    }
     const payload = {
       title: form.title.trim(),
       category: form.category,
@@ -253,13 +293,19 @@ export default function PlannerPage() {
     );
     const startMin = hour * 60;
     const endMin = Math.min(22 * 60, startMin + duration);
+    const startTime = minutesToTime(startMin);
+    const endTime = minutesToTime(endMin);
+    if (findOverlap(state.scheduleBlocks, date, startTime, endTime, block.id)) {
+      push("Cannot place block — time overlaps another block.", "error");
+      return;
+    }
     dispatch({
       type: "UPDATE_BLOCK",
       id: block.id,
       patch: {
         date,
-        startTime: minutesToTime(startMin),
-        endTime: minutesToTime(endMin),
+        startTime,
+        endTime,
       },
     });
   }
