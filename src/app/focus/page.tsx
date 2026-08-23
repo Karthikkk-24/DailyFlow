@@ -133,6 +133,16 @@ export default function FocusPage() {
     remainingRef.current = remaining;
   }, [remaining]);
 
+  // Drop links when the task/goal was deleted while Focus is open.
+  useEffect(() => {
+    if (taskId && !state.tasks.some((t) => t.id === taskId)) {
+      setTaskId("");
+    }
+    if (goalId && !state.goals.some((g) => g.id === goalId)) {
+      setGoalId("");
+    }
+  }, [state.tasks, state.goals, taskId, goalId]);
+
   const formatTime = (secs: number) => {
     const m = Math.floor(secs / 60);
     const s = secs % 60;
@@ -153,18 +163,24 @@ export default function FocusPage() {
     // Use a ref so the timer tick that hits 0 isn't racing React state.
     const focusedSeconds = Math.max(0, minutes * 60 - remainingRef.current);
     const duration = Math.max(1, Math.round(focusedSeconds / 60));
+    const linkedTaskId =
+      taskId && state.tasks.some((t) => t.id === taskId) ? taskId : undefined;
+    const linkedGoalId =
+      goalId && state.goals.some((g) => g.id === goalId) ? goalId : undefined;
+    if (taskId && !linkedTaskId) setTaskId("");
+    if (goalId && !linkedGoalId) setGoalId("");
     dispatch({
       type: "COMPLETE_FOCUS",
       session: {
         durationMinutes: duration,
         startedAt: startedAt.current ?? nowIso(),
         completedAt: nowIso(),
-        linkedTaskId: taskId || undefined,
-        linkedGoalId: goalId || undefined,
+        linkedTaskId,
+        linkedGoalId,
       },
     });
     push(`Focus session complete — ${duration} minutes`, "success");
-  }, [dispatch, minutes, taskId, goalId, push]);
+  }, [dispatch, minutes, taskId, goalId, push, state.tasks, state.goals]);
 
   useEffect(() => {
     if (pendingComplete.current) {
