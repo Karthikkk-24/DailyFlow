@@ -60,6 +60,35 @@ export function DayFlowProvider({ children }: { children: ReactNode }) {
   const skipSave = useRef(true);
   const lastPersisted = useRef<AppState | null>(null);
   const persistBlocked = useRef(false);
+  const stateRef = useRef(state);
+  stateRef.current = state;
+  const pendingSave = useRef(false);
+
+  const applySaveResult = useCallback((toSave: AppState, result: ReturnType<typeof saveState>) => {
+    if (!result.error) {
+      lastPersisted.current = toSave;
+      persistBlocked.current = false;
+      setStorageError(null);
+      return;
+    }
+    setStorageError(result.error);
+    if (isQuotaError(result.error) && lastPersisted.current) {
+      persistBlocked.current = true;
+      skipSave.current = true;
+      dispatch({ type: "HYDRATE", state: lastPersisted.current });
+    }
+  }, []);
+
+  const flushPendingSave = useCallback(() => {
+    if (saveTimer.current) {
+      clearTimeout(saveTimer.current);
+      saveTimer.current = null;
+    }
+    if (!pendingSave.current) return;
+    pendingSave.current = false;
+    const toSave = stateRef.current;
+    applySaveResult(toSave, saveState(toSave));
+  }, [applySaveResult]);
 
   const guardedDispatch = useCallback((action: DayFlowAction) => {
     if (persistBlocked.current && !ALLOW_WHILE_BLOCKED.has(action.type)) {
@@ -97,25 +126,31 @@ export function DayFlowProvider({ children }: { children: ReactNode }) {
       return;
     }
     if (saveTimer.current) clearTimeout(saveTimer.current);
+    pendingSave.current = true;
     saveTimer.current = setTimeout(() => {
-      const result = saveState(state);
-      if (!result.error) {
-        lastPersisted.current = state;
-        persistBlocked.current = false;
-        setStorageError(null);
-        return;
-      }
-      setStorageError(result.error);
-      if (isQuotaError(result.error) && lastPersisted.current) {
-        persistBlocked.current = true;
-        skipSave.current = true;
-        dispatch({ type: "HYDRATE", state: lastPersisted.current });
-      }
+      pendingSave.current = false;
+      saveTimer.current = null;
+      applySaveResult(state, saveState(state));
     }, 300);
     return () => {
-      if (saveTimer.current) clearTimeout(saveTimer.current);
+      // Clear only — flush on unmount / pagehide so rapid edits stay debounced.
+      if (saveTimer.current) {
+        clearTimeout(saveTimer.current);
+        saveTimer.current = null;
+      }
     };
-  }, [state, hydrated]);
+  }, [state, hydrated, applySaveResult]);
+
+  useEffect(() => {
+    const onHide = () => flushPendingSave();
+    window.addEventListener("pagehide", onHide);
+    window.addEventListener("beforeunload", onHide);
+    return () => {
+      window.removeEventListener("pagehide", onHide);
+      window.removeEventListener("beforeunload", onHide);
+      flushPendingSave();
+    };
+  }, [flushPendingSave]);
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
