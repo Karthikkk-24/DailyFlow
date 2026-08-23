@@ -181,7 +181,7 @@ export default function SettingsPage() {
             </div>
             <div>
               <Label htmlFor="sgoal">Primary goal</Label>
-              <Textarea id="sgoal" value={primaryGoal} onChange={(e) => setPrimaryGoal(e.target.value)} />
+              <Textarea id="sgoal" value={primaryGoal} onChange={(e) => setPrimaryGoal(e.target.value)} maxLength={500} />
             </div>
             <div className="grid gap-3 sm:grid-cols-3">
               <div>
