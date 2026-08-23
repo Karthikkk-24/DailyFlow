@@ -297,7 +297,10 @@ export function dayFlowReducer(
           if (allDone && (next.status === "active" || next.status === "paused")) {
             next.reopenStatus = next.status;
             next.status = "completed";
-          } else if (!allDone && next.status === "completed") {
+          } else if (
+            next.milestones.some((m) => !m.completed) &&
+            next.status === "completed"
+          ) {
             // Cannot mark completed while milestones remain open.
             next.status = next.reopenStatus ?? "active";
             next.reopenStatus = undefined;
