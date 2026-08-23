@@ -24,16 +24,40 @@ import {
   snapshotsInRange,
   sumFocusMinutes,
 } from "@/lib/analytics/insights";
-import { computeStreak, goalProgress } from "@/lib/analytics/score";
+import { computeStreak, goalProgress, recomputeTodaySnapshot } from "@/lib/analytics/score";
+import { useTodayKey } from "@/hooks/use-today-key";
 import { format, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
+import type { AnalyticsSnapshot } from "@/types";
+
+function toSnapshot(
+  snap: ReturnType<typeof recomputeTodaySnapshot>,
+): AnalyticsSnapshot {
+  return {
+    date: snap.date,
+    tasksCompleted: snap.tasksCompleted,
+    habitsCompleted: snap.habitsCompleted,
+    habitsTotal: snap.habitsTotal,
+    focusMinutes: snap.focusMinutes,
+    scheduleBlocksCompleted: snap.scheduleBlocksCompleted,
+    todayScore: snap.todayScore,
+  };
+}
 
 export default function AnalyticsPage() {
   const { state } = useDayFlow();
   const [days, setDays] = useState<7 | 30>(7);
+  const today = useTodayKey();
 
   const data = useMemo(() => {
-    const range = snapshotsInRange(state.analyticsSnapshots, days);
+    // Overlay a live "today" row so overnight tabs don't keep yesterday's point
+    // until the next mutation persists a snapshot.
+    const liveToday = toSnapshot(recomputeTodaySnapshot(state));
+    const merged = [
+      ...state.analyticsSnapshots.filter((s) => s.date !== liveToday.date),
+      liveToday,
+    ];
+    const range = snapshotsInRange(merged, days);
     return fillRange(range, days).map((s) => ({
       ...s,
       label: format(parseISO(s.date), days === 7 ? "EEE" : "MMM d"),
@@ -42,7 +66,7 @@ export default function AnalyticsPage() {
           ? 0
           : Math.round((s.habitsCompleted / s.habitsTotal) * 100),
     }));
-  }, [state.analyticsSnapshots, days]);
+  }, [state, days, today]);
 
   const bestHabit = useMemo(() => {
     let best = { name: "—", streak: 0 };
