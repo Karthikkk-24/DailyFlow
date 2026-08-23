@@ -129,7 +129,7 @@ function HourSlot({
 
 export default function PlannerPage() {
   const { state, dispatch } = useDayFlow();
-  const today = useTodayKey();
+  const [today] = useTodayKey();
   const [weekOffset, setWeekOffset] = useState(0);
   // Recompute when the local calendar day or week offset changes.
   const days = useMemo(

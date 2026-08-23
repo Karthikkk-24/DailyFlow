@@ -22,7 +22,7 @@ import type { Habit } from "@/types";
 
 export default function HabitsPage() {
   const { state, dispatch } = useDayFlow();
-  const today = useTodayKey();
+  const [today] = useTodayKey();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Habit | null>(null);
 
