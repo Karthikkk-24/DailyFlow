@@ -4,7 +4,7 @@ import { createSeededState } from "@/lib/seed/demo-data";
 import { computeStreak, recomputeTodaySnapshot } from "@/lib/analytics/score";
 import { parseImportJson } from "@/lib/storage";
 import { todayKey } from "@/lib/utils";
-import { addDays, format, subDays } from "date-fns";
+import { addDays, format, parseISO, subDays } from "date-fns";
 
 describe("integration: task complete → analytics", () => {
   it("marks a today task done and updates the today snapshot score inputs", () => {
@@ -203,3 +203,44 @@ describe("integration: midnight rollover", () => {
 
 });
 
+describe("integration: today overdue backlog", () => {
+  it("includes overdue backlog tasks in today task set for display", () => {
+    const base = createSeededState();
+    const yesterday = format(subDays(new Date(), 1), "yyyy-MM-dd");
+    const key = todayKey();
+    const withOverdue = {
+      ...base,
+      tasks: [
+        ...base.tasks,
+        {
+          id: "task-overdue",
+          title: "Overdue backlog",
+          status: "backlog" as const,
+          priority: "high" as const,
+          category: "Work",
+          dueDate: yesterday,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          order: 99,
+        },
+      ],
+    };
+    const visible = withOverdue.tasks.filter(
+      (t) =>
+        t.status === "today" ||
+        t.status === "in_progress" ||
+        (t.dueDate === key && t.status !== "done") ||
+        (t.status === "backlog" && !!t.dueDate && t.dueDate < key) ||
+        (t.status === "done" &&
+          !!t.completedAt &&
+          todayKey(parseISO(t.completedAt)) === key),
+    );
+    expect(visible.some((t) => t.id === "task-overdue")).toBe(true);
+    const snap = recomputeTodaySnapshot(withOverdue);
+    const snapWith = recomputeTodaySnapshot({
+      ...withOverdue,
+      tasks: withOverdue.tasks.filter((t) => t.id !== "task-overdue"),
+    });
+    expect(snap.todayScore).toBe(snapWith.todayScore);
+  });
+});
