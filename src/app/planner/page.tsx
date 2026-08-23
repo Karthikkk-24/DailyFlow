@@ -202,6 +202,14 @@ export default function PlannerPage() {
     return map;
   }, [days, state.scheduleBlocks]);
 
+  const weekHasBlocks = useMemo(
+    () =>
+      days.some(
+        (d) => (blocksByDate.get(format(d, "yyyy-MM-dd")) ?? []).length > 0,
+      ),
+    [days, blocksByDate],
+  );
+
   function openCreate(date?: string, hour?: number) {
     setEditing(null);
     const start =
@@ -443,10 +451,10 @@ export default function PlannerPage() {
         </div>
       </DndContext>
 
-      {state.scheduleBlocks.length === 0 && (
+      {!weekHasBlocks && (
         <div className="mt-6">
           <EmptyState
-            title="No schedule blocks"
+            title="No blocks this week"
             description="Click a time slot or create a block to plan your week."
             action={<Button onClick={() => openCreate()}>New block</Button>}
           />
