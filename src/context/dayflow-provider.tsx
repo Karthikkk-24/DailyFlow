@@ -46,6 +46,7 @@ const ALLOW_WHILE_BLOCKED = new Set<DayFlowAction["type"]>([
   "REPLACE_STATE",
   "RESET_DEMO",
   "COMPLETE_FOCUS",
+  "ROLLOVER_STALE_TODAY",
 ]);
 
 export function DayFlowProvider({ children }: { children: ReactNode }) {
