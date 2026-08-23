@@ -54,6 +54,12 @@ export default function OnboardingPage() {
   );
 
   function skip() {
+    // Same hours check as Continue on step 2 — invalid end≤start seeds no deep-work blocks.
+    if (timeToMinutes(end) <= timeToMinutes(start)) {
+      setError("End time must be after start time.");
+      setStep(2);
+      return;
+    }
     // Keep any answers already entered instead of discarding the wizard draft.
     dispatch({
       type: "COMPLETE_ONBOARDING",
