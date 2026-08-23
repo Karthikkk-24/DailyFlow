@@ -244,3 +244,64 @@ describe("integration: today overdue backlog", () => {
     expect(snap.todayScore).toBe(snapWith.todayScore);
   });
 });
+
+describe("integration: completed goal status dropdown", () => {
+  it("keeps active or paused when user changes status on a completed goal", () => {
+    const base = createSeededState();
+    const goal = base.goals[0];
+    const completed = {
+      ...goal,
+      status: "completed" as const,
+      reopenStatus: "active" as const,
+      milestones: goal.milestones.map((m) => ({
+        ...m,
+        completed: true,
+        completedAt: m.completedAt ?? new Date().toISOString(),
+      })),
+    };
+    const state = {
+      ...base,
+      goals: base.goals.map((g) => (g.id === goal.id ? completed : g)),
+    };
+
+    const active = dayFlowReducer(state, {
+      type: "UPDATE_GOAL",
+      id: goal.id,
+      patch: { status: "active" },
+    });
+    expect(active.goals.find((g) => g.id === goal.id)?.status).toBe("active");
+
+    const paused = dayFlowReducer(active, {
+      type: "UPDATE_GOAL",
+      id: goal.id,
+      patch: { status: "paused" },
+    });
+    expect(paused.goals.find((g) => g.id === goal.id)?.status).toBe("paused");
+  });
+
+  it("blocks completed status while milestones remain open", () => {
+    const base = createSeededState();
+    const goal = base.goals[0];
+    const withOpen = {
+      ...goal,
+      status: "active" as const,
+      milestones: goal.milestones.map((m, i) => ({
+        ...m,
+        completed: i === 0,
+        completedAt: i === 0 ? new Date().toISOString() : undefined,
+      })),
+    };
+    const state = {
+      ...base,
+      goals: base.goals.map((g) => (g.id === goal.id ? withOpen : g)),
+    };
+
+    const next = dayFlowReducer(state, {
+      type: "UPDATE_GOAL",
+      id: goal.id,
+      patch: { status: "completed" },
+    });
+    expect(next.goals.find((g) => g.id === goal.id)?.status).toBe("active");
+  });
+});
+
