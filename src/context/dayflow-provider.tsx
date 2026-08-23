@@ -16,7 +16,7 @@ import {
   type DayFlowAction,
 } from "@/context/dayflow-reducer";
 import { createSeededState } from "@/lib/seed/demo-data";
-import { loadState, saveState } from "@/lib/storage";
+import { STORAGE_KEY, loadState, saveState } from "@/lib/storage";
 import { clearFocusSession } from "@/lib/focus-session";
 
 interface DayFlowContextValue {
@@ -155,6 +155,33 @@ export function DayFlowProvider({ children }: { children: ReactNode }) {
       flushPendingSave();
     };
   }, [flushPendingSave]);
+
+  useEffect(() => {
+    const onStorage = (event: StorageEvent) => {
+      if (event.key !== STORAGE_KEY || event.storageArea !== localStorage) return;
+      if (event.newValue == null) return;
+
+      if (saveTimer.current) {
+        clearTimeout(saveTimer.current);
+        saveTimer.current = null;
+      }
+      pendingSave.current = false;
+
+      const result = loadState();
+      if (result.data) {
+        skipSave.current = true;
+        lastPersisted.current = result.data;
+        persistBlocked.current = false;
+        dispatch({ type: "HYDRATE", state: result.data });
+        applyTheme(result.data.meta.theme);
+        setStorageError(null);
+        return;
+      }
+      if (result.error) setStorageError(result.error);
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
