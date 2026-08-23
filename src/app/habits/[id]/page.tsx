@@ -143,25 +143,48 @@ export default function HabitDetailPage() {
                 className="flex shrink-0 flex-col gap-1"
                 aria-label={`Week ${week + 1} of 12`}
               >
-                {grid.slice(week * 7, week * 7 + 7).map((cell) => (
-                  <div
-                    key={cell.date}
-                    title={`${cell.date}${cell.future ? " · future" : cell.done ? " · done" : cell.due ? " · missed" : ""}`}
-                    className={cn(
-                      "h-3 w-3 rounded-[3px] sm:h-3.5 sm:w-3.5",
-                      cell.future && "bg-transparent ring-1 ring-border/40",
-                      !cell.future && !cell.due && "bg-muted/40",
-                      !cell.future && cell.due && !cell.done && "bg-muted",
-                      !cell.future && cell.done && "bg-primary",
-                    )}
-                  />
-                ))}
+                {grid.slice(week * 7, week * 7 + 7).map((cell) => {
+                  const canToggle = !cell.future && (cell.due || cell.done);
+                  return (
+                    <button
+                      key={cell.date}
+                      type="button"
+                      disabled={!canToggle}
+                      title={`${cell.date}${cell.future ? " · future" : cell.done ? " · done" : cell.due ? " · missed" : " · not due"}`}
+                      aria-label={
+                        cell.future
+                          ? `${cell.date} future`
+                          : cell.done
+                            ? `Mark ${cell.date} incomplete`
+                            : cell.due
+                              ? `Mark ${cell.date} complete`
+                              : `${cell.date} not due`
+                      }
+                      onClick={() => {
+                        if (!canToggle) return;
+                        dispatch({
+                          type: "TOGGLE_HABIT_DAY",
+                          habitId: habit.id,
+                          date: cell.date,
+                        });
+                      }}
+                      className={cn(
+                        "h-3 w-3 rounded-[3px] sm:h-3.5 sm:w-3.5",
+                        canToggle && "cursor-pointer hover:ring-2 hover:ring-primary/40",
+                        !canToggle && "cursor-default",
+                        cell.future && "bg-transparent ring-1 ring-border/40",
+                        !cell.future && !cell.due && "bg-muted/40",
+                        !cell.future && cell.due && !cell.done && "bg-muted",
+                        !cell.future && cell.done && "bg-primary",
+                      )}
+                    />
+                  );
+                })}
               </div>
             ))}
           </div>
           <p className="mt-3 text-xs text-muted-foreground">
-            Completion last 30 days: {pct}% · Monday–Sunday week columns (top
-            → bottom = Mon–Sun)
+            Completion last 30 days: {pct}% · Mon–Sun weeks · click a due day to toggle
           </p>
         </div>
       </section>
