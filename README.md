@@ -67,18 +67,7 @@ Weighted average (0–100):
 
 ### Known gaps
 
-Remaining polish is tracked in the [issue tracker](https://github.com/Karthikkk-24/DailyFlow/issues). Previously listed items (#22–#26, #29) are closed and shipped.
-
-Notable open themes (see issues for detail):
-
-| Area | Notes |
-|------|--------|
-| Today / habits UX | In-place task edit, habit history toggles, calendar-week grid |
-| Onboarding / settings | Gate redirects, desired habits editing, energy arrow keys |
-| Planner / analytics | Visible-hour validation, snapshot retention |
-| Resilience / a11y | `global-error`, toast `aria-live`, midnight day refresh |
-
-See open issues labeled P3/P4 for the live list.
+Tracked polish backlog is clear as of this writing. See the [GitHub issue tracker](https://github.com/Karthikkk-24/DailyFlow/issues) for any new work.
 
 ## Design
 
