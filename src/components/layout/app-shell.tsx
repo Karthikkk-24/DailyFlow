@@ -15,7 +15,7 @@ import {
   Timer,
   X,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useDayFlow } from "@/context/dayflow-provider";
 import { Skeleton } from "@/components/ui/card";
@@ -46,13 +46,73 @@ const MOBILE_MORE = [
   { href: "/settings", label: "Settings", icon: Settings },
 ] as const;
 
+const FOCUSABLE =
+  'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { hydrated, state, storageError } = useDayFlow();
   const [open, setOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
+  const morePanelRef = useRef<HTMLDivElement>(null);
+  const morePrevFocus = useRef<HTMLElement | null>(null);
   const hideChrome = pathname.startsWith("/onboarding");
   const moreActive = MOBILE_MORE.some((item) => pathname.startsWith(item.href));
+
+  useEffect(() => {
+    if (!moreOpen) return;
+    morePrevFocus.current =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+    const panel = morePanelRef.current;
+    const focusables = () =>
+      panel
+        ? Array.from(panel.querySelectorAll<HTMLElement>(FOCUSABLE)).filter(
+            (el) => !el.hasAttribute("disabled") && el.offsetParent !== null,
+          )
+        : [];
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setMoreOpen(false);
+        return;
+      }
+      if (e.key !== "Tab" || !panel) return;
+      const items = focusables();
+      if (items.length === 0) {
+        e.preventDefault();
+        panel.focus();
+        return;
+      }
+      const first = items[0];
+      const last = items[items.length - 1];
+      const active = document.activeElement as HTMLElement | null;
+      if (e.shiftKey) {
+        if (active === first || !panel.contains(active)) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else if (active === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    // Defer focus until after paint so the panel is mounted.
+    const t = window.setTimeout(() => {
+      const items = focusables();
+      (items[0] ?? panel)?.focus();
+    }, 0);
+    return () => {
+      window.clearTimeout(t);
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prevOverflow;
+      morePrevFocus.current?.focus();
+    };
+  }, [moreOpen]);
 
   if (!hydrated) {
     return (
@@ -207,13 +267,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="fixed inset-0 z-50 lg:hidden">
           <button
             type="button"
+            tabIndex={-1}
             className="absolute inset-0 bg-black/40"
             aria-label="Close more menu"
             onClick={() => setMoreOpen(false)}
           />
           <div
+            ref={morePanelRef}
             role="dialog"
+            aria-modal="true"
             aria-label="More destinations"
+            tabIndex={-1}
             className="absolute inset-x-0 bottom-0 rounded-t-2xl border border-border bg-card p-4 pb-8 shadow-xl"
           >
             <div className="mb-3 flex items-center justify-between">
