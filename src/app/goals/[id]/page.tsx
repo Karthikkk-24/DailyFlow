@@ -32,9 +32,9 @@ export default function GoalDetailPage() {
       <EmptyState
         title="Goal not found"
         action={
-          <Link href="/goals">
-            <Button variant="secondary">Back to goals</Button>
-          </Link>
+          <Button asChild variant="secondary">
+            <Link href="/goals">Back to goals</Link>
+          </Button>
         }
       />
     );

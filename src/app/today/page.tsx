@@ -110,11 +110,11 @@ export default function TodayPage() {
             <Button variant="secondary" onClick={() => setOpen(true)}>
               <Plus className="h-4 w-4" /> Task
             </Button>
-            <Link href="/focus">
-              <Button>
+            <Button asChild>
+              <Link href="/focus">
                 <Timer className="h-4 w-4" /> Focus
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </>
         }
       />
@@ -277,9 +277,9 @@ export default function TodayPage() {
               title="No blocks today"
               description="Plan your day in the weekly planner."
               action={
-                <Link href="/planner">
-                  <Button variant="secondary">Open planner</Button>
-                </Link>
+                <Button asChild variant="secondary">
+                  <Link href="/planner">Open planner</Link>
+                </Button>
               }
             />
           ) : (
@@ -337,12 +337,12 @@ export default function TodayPage() {
           <div>
             <h2 className="mb-3 font-display text-xl">Habit streaks</h2>
             {state.habits.length === 0 ? (
-              <EmptyState title="No habits yet" action={<Link href="/habits"><Button variant="secondary">Add habits</Button></Link>} />
+              <EmptyState title="No habits yet" action={<Button asChild variant="secondary"><Link href="/habits">Add habits</Link></Button>} />
             ) : dueHabits.length === 0 ? (
               <EmptyState
                 title="No habits due today"
                 description="You have habits, but none are scheduled for today. Check the Habits page for streaks."
-                action={<Link href="/habits"><Button variant="secondary">View habits</Button></Link>}
+                action={<Button asChild variant="secondary"><Link href="/habits">View habits</Link></Button>}
               />
             ) : (
               <div className="flex gap-3 overflow-x-auto pb-1">
@@ -382,7 +382,7 @@ export default function TodayPage() {
           <div>
             <h2 className="mb-3 font-display text-xl">Goal progress</h2>
             {activeGoals.length === 0 ? (
-              <EmptyState title="No active goals" action={<Link href="/goals"><Button variant="secondary">Set a goal</Button></Link>} />
+              <EmptyState title="No active goals" action={<Button asChild variant="secondary"><Link href="/goals">Set a goal</Link></Button>} />
             ) : (
               <div className="space-y-3">
                 {activeGoals.map((g) => {

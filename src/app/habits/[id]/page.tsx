@@ -62,9 +62,9 @@ export default function HabitDetailPage() {
       <EmptyState
         title="Habit not found"
         action={
-          <Link href="/habits">
-            <Button variant="secondary">Back to habits</Button>
-          </Link>
+          <Button asChild variant="secondary">
+            <Link href="/habits">Back to habits</Link>
+          </Button>
         }
       />
     );
