@@ -143,6 +143,23 @@ export default function FocusPage() {
     }
   }, [state.tasks, state.goals, taskId, goalId]);
 
+  // Sync idle default minutes when Settings energy pattern changes (not mid-session).
+  const skipEnergyDefaultSync = useRef(true);
+  useEffect(() => {
+    if (skipEnergyDefaultSync.current) {
+      skipEnergyDefaultSync.current = false;
+      return;
+    }
+    if (timerState !== "idle") return;
+    const next = focusMinutesForEnergy(state.profile.energyPattern);
+    setMinutes(next);
+    setRemaining(next * 60);
+    setUsingCustom(!PRESETS.includes(next));
+    if (!PRESETS.includes(next)) setCustomDraft(String(next));
+    // Intentionally omit timerState: only react to energyPattern changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- see above
+  }, [state.profile.energyPattern]);
+
   const formatTime = (secs: number) => {
     const m = Math.floor(secs / 60);
     const s = secs % 60;
