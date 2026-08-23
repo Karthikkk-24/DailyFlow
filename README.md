@@ -67,18 +67,18 @@ Weighted average (0–100):
 
 ### Known gaps
 
-Open polish items tracked as GitHub issues (P3/P4). Notable remaining work:
+Remaining polish is tracked in the [issue tracker](https://github.com/Karthikkk-24/DailyFlow/issues). Previously listed items (#22–#26, #29) are closed and shipped.
 
-| Area | Status |
+Notable open themes (see issues for detail):
+
+| Area | Notes |
 |------|--------|
-| Focus custom duration + tick sound | Open — [#23](https://github.com/Karthikkk-24/DailyFlow/issues/23) |
-| Integration tests + error boundary | Open — [#24](https://github.com/Karthikkk-24/DailyFlow/issues/24) |
-| Onboarding energy radio semantics | Open — [#25](https://github.com/Karthikkk-24/DailyFlow/issues/25) |
-| Profile form sync after import/reset | Open — [#26](https://github.com/Karthikkk-24/DailyFlow/issues/26) |
-| Sunday-aware seed planner dates | Open — [#22](https://github.com/Karthikkk-24/DailyFlow/issues/22) |
-| Habit detail GitHub-style week columns on mobile | Open — [#29](https://github.com/Karthikkk-24/DailyFlow/issues/29) |
+| Today / habits UX | In-place task edit, habit history toggles, calendar-week grid |
+| Onboarding / settings | Gate redirects, desired habits editing, energy arrow keys |
+| Planner / analytics | Visible-hour validation, snapshot retention |
+| Resilience / a11y | `global-error`, toast `aria-live`, midnight day refresh |
 
-See the [issue tracker](https://github.com/Karthikkk-24/DailyFlow/issues) for the full list.
+See open issues labeled P3/P4 for the live list.
 
 ## Design
 
