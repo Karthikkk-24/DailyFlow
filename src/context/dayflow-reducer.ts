@@ -9,8 +9,8 @@ import type {
   ThemeMode,
   UserProfile,
 } from "@/types";
-import { createId, nowIso } from "@/lib/utils";
-import { upsertTodaySnapshot } from "@/lib/analytics/score";
+import { createId, nowIso, todayKey } from "@/lib/utils";
+import { upsertTodaySnapshot, upsertSnapshotForDate } from "@/lib/analytics/score";
 import { createSeededState, personalizeAfterOnboarding } from "@/lib/seed/demo-data";
 
 export type DayFlowAction =
@@ -214,7 +214,13 @@ export function dayFlowReducer(
           { habitId: action.habitId, date: action.date, completed: true },
         ];
       }
-      return withSnapshot({ ...state, habitLogs });
+      const next = touch({ ...state, habitLogs });
+      // Refresh the toggled day's row (today or historical) so Analytics stays accurate.
+      let withDate = upsertSnapshotForDate(next, action.date);
+      if (action.date !== todayKey()) {
+        withDate = upsertTodaySnapshot(withDate);
+      }
+      return withDate;
     }
 
     case "ADD_GOAL": {
