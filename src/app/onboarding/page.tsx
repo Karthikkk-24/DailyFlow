@@ -54,7 +54,14 @@ export default function OnboardingPage() {
   );
 
   function skip() {
-    dispatch({ type: "SKIP_ONBOARDING" });
+    // Keep any answers already entered instead of discarding the wizard draft.
+    dispatch({
+      type: "COMPLETE_ONBOARDING",
+      profile: {
+        ...profile,
+        name: profile.name.trim() || state.profile.name || "Friend",
+      },
+    });
     router.replace("/today");
   }
 
