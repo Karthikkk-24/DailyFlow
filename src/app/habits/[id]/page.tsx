@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { format, subDays } from "date-fns";
+import { addDays, format, startOfDay, startOfWeek, subWeeks } from "date-fns";
 import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
 import { useDayFlow } from "@/context/dayflow-provider";
 import { Badge, Card, EmptyState, PageHeader, ProgressRing } from "@/components/ui/card";
@@ -32,14 +32,24 @@ export default function HabitDetailPage() {
 
   const grid = useMemo(() => {
     if (!habit) return [];
-    const cells: { date: string; due: boolean; done: boolean }[] = [];
-    for (let i = 83; i >= 0; i--) {
-      const d = subDays(new Date(), i);
+    const today = startOfDay(new Date());
+    // 12 Monday-start calendar weeks ending with the week that contains today.
+    const rangeStart = startOfWeek(subWeeks(today, 11), { weekStartsOn: 1 });
+    const cells: {
+      date: string;
+      due: boolean;
+      done: boolean;
+      future: boolean;
+    }[] = [];
+    for (let i = 0; i < 84; i++) {
+      const d = addDays(rangeStart, i);
       const date = format(d, "yyyy-MM-dd");
+      const future = d > today;
       cells.push({
         date,
-        due: isHabitDueOn(habit, d),
-        done: isHabitCompletedOn(habit.id, date, state.habitLogs),
+        due: !future && isHabitDueOn(habit, d),
+        done: !future && isHabitCompletedOn(habit.id, date, state.habitLogs),
+        future,
       });
     }
     return cells;
@@ -136,12 +146,13 @@ export default function HabitDetailPage() {
                 {grid.slice(week * 7, week * 7 + 7).map((cell) => (
                   <div
                     key={cell.date}
-                    title={`${cell.date}${cell.done ? " · done" : cell.due ? " · missed" : ""}`}
+                    title={`${cell.date}${cell.future ? " · future" : cell.done ? " · done" : cell.due ? " · missed" : ""}`}
                     className={cn(
                       "h-3 w-3 rounded-[3px] sm:h-3.5 sm:w-3.5",
-                      !cell.due && "bg-muted/40",
-                      cell.due && !cell.done && "bg-muted",
-                      cell.done && "bg-primary",
+                      cell.future && "bg-transparent ring-1 ring-border/40",
+                      !cell.future && !cell.due && "bg-muted/40",
+                      !cell.future && cell.due && !cell.done && "bg-muted",
+                      !cell.future && cell.done && "bg-primary",
                     )}
                   />
                 ))}
@@ -149,7 +160,8 @@ export default function HabitDetailPage() {
             ))}
           </div>
           <p className="mt-3 text-xs text-muted-foreground">
-            Completion last 30 days: {pct}% · columns are weeks (top → bottom = day of week)
+            Completion last 30 days: {pct}% · Monday–Sunday week columns (top
+            → bottom = Mon–Sun)
           </p>
         </div>
       </section>
