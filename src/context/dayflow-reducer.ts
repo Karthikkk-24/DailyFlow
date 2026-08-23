@@ -139,6 +139,13 @@ export function dayFlowReducer(
         updatedAt: now,
         order: action.task.order ?? sameStatus.length,
       };
+      if (task.status === "done") {
+        task.completedAt = task.completedAt ?? now;
+        task.previousStatus = task.previousStatus ?? "backlog";
+      } else {
+        task.completedAt = undefined;
+        task.previousStatus = undefined;
+      }
       return withSnapshot({ ...state, tasks: [...state.tasks, task] });
     }
 
