@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   DndContext,
   DragEndEvent,
@@ -149,6 +150,17 @@ export default function TasksPage() {
   const [form, setForm] = useState(emptyForm);
   const [error, setError] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const editId = searchParams.get("edit");
+    if (!editId) return;
+    const task = state.tasks.find((x) => x.id === editId);
+    if (task) openEdit(task);
+    // Strip the query so refresh doesn't reopen forever.
+    window.history.replaceState(null, "", "/tasks");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, state.tasks]);
 
   useEffect(() => {
     const id = window.setTimeout(() => setDebouncedQuery(query), 300);

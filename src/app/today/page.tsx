@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import {
   Check,
@@ -44,6 +45,7 @@ function blockPhase(startTime: string, endTime: string, now = new Date()) {
 
 export default function TodayPage() {
   const { state, dispatch } = useDayFlow();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [error, setError] = useState("");
@@ -238,7 +240,11 @@ export default function TodayPage() {
                 >
                   {task.status === "done" && <Check className="h-3.5 w-3.5" />}
                 </button>
-                <div className="min-w-0 flex-1">
+                <button
+                  type="button"
+                  className="min-w-0 flex-1 text-left"
+                  onClick={() => router.push(`/tasks?edit=${task.id}`)}
+                >
                   <p
                     className={cn(
                       "truncate font-medium",
@@ -254,7 +260,7 @@ export default function TodayPage() {
                       <span className="text-xs text-muted-foreground">{task.dueTime}</span>
                     )}
                   </div>
-                </div>
+                </button>
               </li>
             ))}
           </ul>
