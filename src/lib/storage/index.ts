@@ -58,9 +58,13 @@ export function loadState(): StorageResult<AppState> {
         window.localStorage.setItem(CORRUPT_KEY, corrupt);
       }
       const seeded = createSeededState();
-      saveState(seeded);
+      const recovered = {
+        ...seeded,
+        meta: { ...seeded.meta, onboardingCompleted: false },
+      };
+      saveState(recovered);
       return {
-        data: seeded,
+        data: recovered,
         error: `Saved data was unreadable and was reset to demo data (${message}). A copy was kept under ${CORRUPT_KEY}.`,
       };
     } catch {
