@@ -132,6 +132,7 @@ export default function FocusPage() {
   const pendingComplete = useRef(boot.pendingComplete);
   const lastTickSecond = useRef<number | null>(null);
   const remainingRef = useRef(boot.remaining);
+  const completedOnce = useRef(false);
   useEffect(() => {
     remainingRef.current = remaining;
   }, [remaining]);
@@ -143,6 +144,8 @@ export default function FocusPage() {
   };
 
   const complete = useCallback(() => {
+    if (completedOnce.current) return;
+    completedOnce.current = true;
     setTimerState("completed");
     // Focused time = planned − remaining (pause freezes remaining).
     // Use a ref so the timer tick that hits 0 isn't racing React state.
@@ -245,6 +248,8 @@ export default function FocusPage() {
     setRemaining(minutes * 60);
     endAt.current = null;
     startedAt.current = null;
+    completedOnce.current = false;
+    pendingComplete.current = false;
     sessionStorage.removeItem(FOCUS_KEY);
   }
 
