@@ -242,10 +242,12 @@ export function dayFlowReducer(
         // Keep status aligned with milestone completion whenever either changes.
         if (action.patch.milestones || action.patch.status !== undefined) {
           if (allDone && (next.status === "active" || next.status === "paused")) {
+            next.reopenStatus = next.status;
             next.status = "completed";
           } else if (!allDone && next.status === "completed") {
             // Cannot mark completed while milestones remain open.
-            next.status = "active";
+            next.status = next.reopenStatus ?? "active";
+            next.reopenStatus = undefined;
           }
         }
         return next;
@@ -278,13 +280,23 @@ export function dayFlowReducer(
         });
         const allDone =
           milestones.length > 0 && milestones.every((m) => m.completed);
-        let status = g.status;
         if (allDone && (g.status === "active" || g.status === "paused")) {
-          status = "completed";
-        } else if (!allDone && g.status === "completed") {
-          status = "active";
+          return {
+            ...g,
+            milestones,
+            status: "completed" as const,
+            reopenStatus: g.status,
+          };
         }
-        return { ...g, milestones, status };
+        if (!allDone && g.status === "completed") {
+          return {
+            ...g,
+            milestones,
+            status: g.reopenStatus ?? "active",
+            reopenStatus: undefined,
+          };
+        }
+        return { ...g, milestones };
       });
       return withSnapshot({ ...state, goals });
     }
