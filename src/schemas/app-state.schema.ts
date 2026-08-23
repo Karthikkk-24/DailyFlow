@@ -67,6 +67,7 @@ export const goalSchema = z.object({
   category: z.string().min(1).max(40),
   targetDate: z.string().optional(),
   status: z.enum(["active", "completed", "paused"]),
+  reopenStatus: z.enum(["active", "paused"]).optional(),
   milestones: z.array(milestoneSchema).max(50),
   createdAt: z.string(),
 });

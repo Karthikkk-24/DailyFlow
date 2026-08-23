@@ -80,6 +80,8 @@ export interface Goal {
   category: string;
   targetDate?: string;
   status: GoalStatus;
+  /** Prior active/paused status to restore when leaving completed via milestones. */
+  reopenStatus?: Exclude<GoalStatus, "completed">;
   milestones: Milestone[];
   createdAt: string;
 }
