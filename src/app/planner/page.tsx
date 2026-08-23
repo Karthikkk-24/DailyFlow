@@ -217,8 +217,16 @@ export default function PlannerPage() {
       setError("Title is required.");
       return;
     }
-    if (timeToMinutes(form.endTime) <= timeToMinutes(form.startTime)) {
+    const startMin = timeToMinutes(form.startTime);
+    const endMin = timeToMinutes(form.endTime);
+    if (endMin <= startMin) {
       setError("End time must be after start time.");
+      return;
+    }
+    const gridStart = 6 * 60;
+    const gridEnd = 22 * 60;
+    if (startMin < gridStart || endMin > gridEnd) {
+      setError("Blocks must stay within the visible grid (06:00–22:00).");
       return;
     }
     const payload = {
@@ -445,6 +453,8 @@ export default function PlannerPage() {
               <Input
                 id="bstart"
                 type="time"
+                min="06:00"
+                max="21:30"
                 value={form.startTime}
                 onChange={(e) =>
                   setForm({ ...form, startTime: e.target.value })
@@ -456,6 +466,8 @@ export default function PlannerPage() {
               <Input
                 id="bend"
                 type="time"
+                min="06:30"
+                max="22:00"
                 value={form.endTime}
                 onChange={(e) => setForm({ ...form, endTime: e.target.value })}
               />
