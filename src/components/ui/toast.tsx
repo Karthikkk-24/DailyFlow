@@ -9,6 +9,37 @@ const ToastCtx = createContext<{
   push: (message: string, tone?: Toast["tone"]) => void;
 } | null>(null);
 
+function ToastList({
+  toasts,
+  ariaLive,
+}: {
+  toasts: Toast[];
+  ariaLive: "polite" | "assertive";
+}) {
+  return (
+    <div
+      className="pointer-events-none fixed bottom-20 right-4 z-[60] flex w-80 flex-col gap-2 sm:bottom-4"
+      aria-live={ariaLive}
+      aria-relevant="additions"
+    >
+      {toasts.map((t) => (
+        <div
+          key={t.id}
+          role={t.tone === "error" ? "alert" : "status"}
+          className={cn(
+            "pointer-events-auto rounded-xl border px-4 py-3 text-sm shadow-lg",
+            t.tone === "error" && "border-danger/40 bg-danger-foreground text-danger",
+            t.tone === "success" && "border-success/40 bg-card text-foreground",
+            t.tone === "info" && "border-border bg-card text-foreground",
+          )}
+        >
+          {t.message}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
@@ -22,29 +53,14 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
   const value = useMemo(() => ({ push }), [push]);
 
+  const errorToasts = toasts.filter((t) => t.tone === "error");
+  const otherToasts = toasts.filter((t) => t.tone !== "error");
+
   return (
     <ToastCtx.Provider value={value}>
       {children}
-      <div
-        className="pointer-events-none fixed bottom-20 right-4 z-[60] flex w-80 flex-col gap-2 sm:bottom-4"
-        aria-live="polite"
-        aria-relevant="additions"
-      >
-        {toasts.map((t) => (
-          <div
-            key={t.id}
-            role="status"
-            className={cn(
-              "pointer-events-auto rounded-xl border px-4 py-3 text-sm shadow-lg",
-              t.tone === "error" && "border-danger/40 bg-danger-foreground text-danger",
-              t.tone === "success" && "border-success/40 bg-card text-foreground",
-              t.tone === "info" && "border-border bg-card text-foreground",
-            )}
-          >
-            {t.message}
-          </div>
-        ))}
-      </div>
+      <ToastList toasts={otherToasts} ariaLive="polite" />
+      <ToastList toasts={errorToasts} ariaLive="assertive" />
     </ToastCtx.Provider>
   );
 }
