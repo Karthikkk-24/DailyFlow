@@ -17,6 +17,7 @@ import {
 } from "@/context/dayflow-reducer";
 import { createSeededState } from "@/lib/seed/demo-data";
 import { loadState, saveState } from "@/lib/storage";
+import { clearFocusSession } from "@/lib/focus-session";
 
 interface DayFlowContextValue {
   state: AppState;
@@ -98,6 +99,9 @@ export function DayFlowProvider({ children }: { children: ReactNode }) {
       return;
     }
     dispatch(action);
+    if (action.type === "REPLACE_STATE" || action.type === "RESET_DEMO") {
+      clearFocusSession();
+    }
   }, []);
 
   useEffect(() => {
