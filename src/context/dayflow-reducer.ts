@@ -235,7 +235,7 @@ export function dayFlowReducer(
           next.milestones.every((m) => m.completed);
         // Keep status aligned with milestone completion whenever either changes.
         if (action.patch.milestones || action.patch.status !== undefined) {
-          if (allDone && next.status === "active") {
+          if (allDone && (next.status === "active" || next.status === "paused")) {
             next.status = "completed";
           } else if (!allDone && next.status === "completed") {
             // Cannot mark completed while milestones remain open.
@@ -273,7 +273,7 @@ export function dayFlowReducer(
         const allDone =
           milestones.length > 0 && milestones.every((m) => m.completed);
         let status = g.status;
-        if (allDone && g.status === "active") {
+        if (allDone && (g.status === "active" || g.status === "paused")) {
           status = "completed";
         } else if (!allDone && g.status === "completed") {
           status = "active";
