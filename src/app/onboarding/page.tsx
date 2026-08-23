@@ -95,9 +95,11 @@ export default function OnboardingPage() {
   }
 
   function toggleHabit(h: string) {
-    setHabits((prev) =>
-      prev.includes(h) ? prev.filter((x) => x !== h) : [...prev, h],
-    );
+    setHabits((prev) => {
+      if (prev.includes(h)) return prev.filter((x) => x !== h);
+      if (prev.length >= 20) return prev;
+      return [...prev, h];
+    });
   }
 
   return (
@@ -254,7 +256,8 @@ export default function OnboardingPage() {
           <div className="space-y-4">
             <h2 className="font-display text-2xl">Habits you want to build</h2>
             <p className="text-sm text-muted-foreground">
-              Pick a few — we&apos;ll add them to your tracker.
+              Pick a few — we&apos;ll add them to your tracker
+              {habits.length >= 20 ? " (maximum 20 selected)." : "."}
             </p>
             <div className="flex flex-wrap gap-2">
               {HABIT_PRESETS.map((h) => (

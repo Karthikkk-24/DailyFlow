@@ -218,9 +218,11 @@ export default function SettingsPage() {
                       key={h}
                       type="button"
                       onClick={() =>
-                        setDesiredHabits((prev) =>
-                          on ? prev.filter((x) => x !== h) : [...prev, h],
-                        )
+                        setDesiredHabits((prev) => {
+                          if (on) return prev.filter((x) => x !== h);
+                          if (prev.length >= 20) return prev;
+                          return [...prev, h];
+                        })
                       }
                       className={cn(
                         "rounded-full border px-3 py-1.5 text-sm transition",

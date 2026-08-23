@@ -100,6 +100,7 @@ function GoalFormFields({
           id="gdesc"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
+          maxLength={2000}
         />
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
@@ -136,6 +137,7 @@ function GoalFormFields({
                   setDrafts(next);
                 }}
                 placeholder={`Milestone ${i + 1}`}
+                maxLength={200}
               />
               {drafts.length > 1 && (
                 <Button
@@ -148,18 +150,20 @@ function GoalFormFields({
               )}
             </div>
           ))}
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() =>
-              setDrafts([
-                ...drafts,
-                { key: createId("draft"), title: "", completed: false },
-              ])
-            }
-          >
-            Add milestone
-          </Button>
+          {drafts.length < 50 && (
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() =>
+                setDrafts([
+                  ...drafts,
+                  { key: createId("draft"), title: "", completed: false },
+                ])
+              }
+            >
+              Add milestone
+            </Button>
+          )}
         </div>
       </div>
       <div className="flex justify-end gap-2">

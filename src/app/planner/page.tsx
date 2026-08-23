@@ -419,6 +419,7 @@ export default function PlannerPage() {
               id="btitle"
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
+              maxLength={200}
             />
             <FieldError>{error}</FieldError>
           </div>
@@ -480,6 +481,7 @@ export default function PlannerPage() {
               id="bnotes"
               value={form.notes}
               onChange={(e) => setForm({ ...form, notes: e.target.value })}
+              maxLength={1000}
             />
           </div>
           <div className="flex justify-between pt-2">
