@@ -8,13 +8,15 @@ import { Button } from "@/components/ui/button";
 import { Input, Label, Select } from "@/components/ui/input";
 import { cn, focusMinutesForEnergy, nowIso } from "@/lib/utils";
 import { useToast } from "@/components/ui/toast";
+import {
+  FOCUS_SESSION_KEY,
+  clearFocusSession,
+} from "@/lib/focus-session";
 
 type TimerState = "idle" | "running" | "paused" | "completed";
 const PRESETS = [25, 45, 60];
 const CUSTOM_MIN = 1;
 const CUSTOM_MAX = 180;
-const FOCUS_KEY = "dayflow:focus:session";
-
 type SavedFocus = {
   minutes: number;
   remaining: number;
@@ -28,11 +30,11 @@ type SavedFocus = {
 function readSavedFocus(): SavedFocus | null {
   if (typeof window === "undefined") return null;
   try {
-    const raw = sessionStorage.getItem(FOCUS_KEY);
+    const raw = sessionStorage.getItem(FOCUS_SESSION_KEY);
     if (!raw) return null;
     return JSON.parse(raw) as SavedFocus;
   } catch {
-    sessionStorage.removeItem(FOCUS_KEY);
+    clearFocusSession();
     return null;
   }
 }
@@ -161,7 +163,7 @@ export default function FocusPage() {
         linkedGoalId: goalId || undefined,
       },
     });
-    sessionStorage.removeItem(FOCUS_KEY);
+    clearFocusSession();
     push(`Focus session complete — ${duration} minutes`, "success");
   }, [dispatch, minutes, taskId, goalId, push]);
 
@@ -175,7 +177,7 @@ export default function FocusPage() {
   useEffect(() => {
     if (timerState === "idle") return;
     sessionStorage.setItem(
-      FOCUS_KEY,
+      FOCUS_SESSION_KEY,
       JSON.stringify({
         minutes,
         remaining,
@@ -250,7 +252,7 @@ export default function FocusPage() {
     startedAt.current = null;
     completedOnce.current = false;
     pendingComplete.current = false;
-    sessionStorage.removeItem(FOCUS_KEY);
+    clearFocusSession();
   }
 
   const sessionActive =
