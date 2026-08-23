@@ -161,7 +161,10 @@ export function goalProgressOverTime(
     for (const g of tracked) {
       const normalized = g.milestones.map((m) => {
         if (!m.completed) return { completed: false };
-        if (!m.completedAt) return { completed: true };
+        // Missing completedAt: count as complete only on asOf (today), not all history.
+        if (!m.completedAt) {
+          return { completed: key === todayKey(asOf) };
+        }
         return { completed: todayKey(parseISO(m.completedAt)) <= key };
       });
       row[`g_${g.id}`] = goalProgress(normalized);

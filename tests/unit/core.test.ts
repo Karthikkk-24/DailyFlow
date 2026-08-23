@@ -4,6 +4,7 @@ import {
   goalProgress,
   recomputeTodaySnapshot,
 } from "@/lib/analytics/score";
+import { goalProgressOverTime } from "@/lib/analytics/insights";
 import { parseImportJson, saveState, STORAGE_KEY } from "@/lib/storage";
 import { createSeededState } from "@/lib/seed/demo-data";
 import type { AppState, Habit, HabitLog } from "@/types";
@@ -289,5 +290,32 @@ describe("energyPattern helpers", () => {
   it("returns hour-aware guidance copy", () => {
     expect(energyGuidance("morning", 9)).toMatch(/Morning energy/i);
     expect(energyGuidance("evening", 10)).toMatch(/later/i);
+  });
+});
+
+describe("goalProgressOverTime", () => {
+  it("does not treat milestones without completedAt as historically complete", () => {
+    const asOf = new Date("2026-08-23T12:00:00.000Z");
+    const goals = [
+      {
+        id: "g1",
+        title: "Ship",
+        description: "",
+        category: "work",
+        status: "active" as const,
+        targetDate: undefined,
+        milestones: [
+          { id: "m1", title: "Done", completed: true },
+          { id: "m2", title: "Open", completed: false },
+        ],
+        createdAt: "2026-08-01T00:00:00.000Z",
+        updatedAt: "2026-08-23T00:00:00.000Z",
+      },
+    ];
+    const { rows } = goalProgressOverTime(goals as never, 7, asOf);
+    const past = rows.find((r) => r.date === "2026-08-20");
+    const today = rows.find((r) => r.date === "2026-08-23");
+    expect(past?.[`g_g1`]).toBe(0);
+    expect(today?.[`g_g1`]).toBe(50);
   });
 });
