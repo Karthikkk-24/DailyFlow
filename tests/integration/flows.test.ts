@@ -151,3 +151,27 @@ describe("integration: hydrate refreshes today snapshot", () => {
     expect(replacedSnap?.todayScore).toBe(live.todayScore);
   });
 });
+
+describe("integration: midnight rollover", () => {
+  it("demotes stale in_progress tasks to backlog", () => {
+    const base = createSeededState();
+    const yesterday = format(subDays(new Date(), 1), "yyyy-MM-dd");
+    const stale = {
+      ...base,
+      tasks: base.tasks.map((t, i) =>
+        i === 0
+          ? {
+              ...t,
+              status: "in_progress" as const,
+              updatedAt: `${yesterday}T12:00:00.000Z`,
+            }
+          : t,
+      ),
+    };
+    const next = dayFlowReducer(stale, {
+      type: "ROLLOVER_STALE_TODAY",
+      today: todayKey(),
+    });
+    expect(next.tasks[0]?.status).toBe("backlog");
+  });
+});
