@@ -9,8 +9,10 @@ import { Input, Label, Select } from "@/components/ui/input";
 import { cn, focusMinutesForEnergy, nowIso } from "@/lib/utils";
 import { useToast } from "@/components/ui/toast";
 import {
-  FOCUS_SESSION_KEY,
+  claimFocusCompletion,
   clearFocusSession,
+  readFocusSession,
+  writeFocusSessionRaw,
 } from "@/lib/focus-session";
 
 type TimerState = "idle" | "running" | "paused" | "completed";
@@ -28,15 +30,7 @@ type SavedFocus = {
 };
 
 function readSavedFocus(): SavedFocus | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = sessionStorage.getItem(FOCUS_SESSION_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw) as SavedFocus;
-  } catch {
-    clearFocusSession();
-    return null;
-  }
+  return readFocusSession() as SavedFocus | null;
 }
 
 function clampCustomMinutes(value: number) {
@@ -147,6 +141,12 @@ export default function FocusPage() {
 
   const complete = useCallback(() => {
     if (completedOnce.current) return;
+    // Shared claim so layout FocusSessionWatcher cannot double-log.
+    if (!claimFocusCompletion()) {
+      completedOnce.current = true;
+      setTimerState("completed");
+      return;
+    }
     completedOnce.current = true;
     setTimerState("completed");
     // Focused time = planned − remaining (pause freezes remaining).
@@ -163,7 +163,6 @@ export default function FocusPage() {
         linkedGoalId: goalId || undefined,
       },
     });
-    clearFocusSession();
     push(`Focus session complete — ${duration} minutes`, "success");
   }, [dispatch, minutes, taskId, goalId, push]);
 
@@ -176,8 +175,7 @@ export default function FocusPage() {
 
   useEffect(() => {
     if (timerState === "idle") return;
-    sessionStorage.setItem(
-      FOCUS_SESSION_KEY,
+    writeFocusSessionRaw(
       JSON.stringify({
         minutes,
         remaining,
