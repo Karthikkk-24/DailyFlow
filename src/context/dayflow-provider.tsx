@@ -2,6 +2,7 @@
 
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -34,6 +35,16 @@ function applyTheme(theme: AppState["meta"]["theme"]) {
   root.classList.toggle("dark", dark);
 }
 
+function isQuotaError(message: string | null) {
+  return !!message && /storage is full/i.test(message);
+}
+
+const ALLOW_WHILE_BLOCKED = new Set<DayFlowAction["type"]>([
+  "HYDRATE",
+  "REPLACE_STATE",
+  "RESET_DEMO",
+]);
+
 export function DayFlowProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(
     dayFlowReducer,
@@ -47,11 +58,24 @@ export function DayFlowProvider({ children }: { children: ReactNode }) {
   );
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const skipSave = useRef(true);
+  const lastPersisted = useRef<AppState | null>(null);
+  const persistBlocked = useRef(false);
+
+  const guardedDispatch = useCallback((action: DayFlowAction) => {
+    if (persistBlocked.current && !ALLOW_WHILE_BLOCKED.has(action.type)) {
+      setStorageError(
+        "Storage is full. Export your data, then reset demo data. Further edits are blocked until storage is freed.",
+      );
+      return;
+    }
+    dispatch(action);
+  }, []);
 
   useEffect(() => {
     const result = loadState();
     if (result.data) {
       skipSave.current = true;
+      lastPersisted.current = result.data;
       dispatch({ type: "HYDRATE", state: result.data });
       applyTheme(result.data.meta.theme);
     }
@@ -75,7 +99,18 @@ export function DayFlowProvider({ children }: { children: ReactNode }) {
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => {
       const result = saveState(state);
+      if (!result.error) {
+        lastPersisted.current = state;
+        persistBlocked.current = false;
+        setStorageError(null);
+        return;
+      }
       setStorageError(result.error);
+      if (isQuotaError(result.error) && lastPersisted.current) {
+        persistBlocked.current = true;
+        skipSave.current = true;
+        dispatch({ type: "HYDRATE", state: lastPersisted.current });
+      }
     }, 300);
     return () => {
       if (saveTimer.current) clearTimeout(saveTimer.current);
@@ -92,8 +127,8 @@ export function DayFlowProvider({ children }: { children: ReactNode }) {
   }, [state.meta.theme]);
 
   const value = useMemo(
-    () => ({ state, dispatch, hydrated, storageError }),
-    [state, hydrated, storageError],
+    () => ({ state, dispatch: guardedDispatch, hydrated, storageError }),
+    [state, guardedDispatch, hydrated, storageError],
   );
 
   return (
