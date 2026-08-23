@@ -319,3 +319,51 @@ describe("goalProgressOverTime", () => {
     expect(today?.[`g_g1`]).toBe(50);
   });
 });
+
+describe("focus session completion claim", () => {
+  const store = new Map<string, string>();
+
+  beforeEach(() => {
+    store.clear();
+    vi.stubGlobal("window", {
+      sessionStorage: {
+        getItem: (k: string) => store.get(k) ?? null,
+        setItem: (k: string, v: string) => {
+          store.set(k, v);
+        },
+        removeItem: (k: string) => {
+          store.delete(k);
+        },
+      },
+    });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("claims completion only once across callers", async () => {
+    const {
+      claimFocusCompletion,
+      claimExpiredFocusSession,
+      writeFocusSessionRaw,
+      FOCUS_SESSION_KEY,
+    } = await import("@/lib/focus-session");
+
+    writeFocusSessionRaw(
+      JSON.stringify({
+        minutes: 25,
+        remaining: 0,
+        timerState: "running",
+        endAt: Date.now() - 1000,
+        startedAt: new Date().toISOString(),
+        taskId: "",
+        goalId: "",
+      }),
+    );
+
+    expect(claimExpiredFocusSession()).not.toBeNull();
+    expect(claimFocusCompletion()).toBe(false);
+    expect(store.has(FOCUS_SESSION_KEY)).toBe(false);
+  });
+});
