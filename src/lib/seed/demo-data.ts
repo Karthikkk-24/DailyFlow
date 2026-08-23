@@ -392,7 +392,6 @@ export function personalizeAfterOnboarding(
   const colors = ["#0D9488", "#2563EB", "#16A34A", "#7C3AED", "#EA580C", "#CA8A04"];
   const newHabits: Habit[] = profile.desiredHabits
     .filter((n) => n.trim() && !existingNames.has(n.trim().toLowerCase()))
-    .slice(0, 6)
     .map((name, i) => ({
       id: createId("hab"),
       name: name.trim(),
