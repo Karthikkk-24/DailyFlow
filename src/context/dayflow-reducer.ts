@@ -114,10 +114,22 @@ export function dayFlowReducer(
     case "ROLLOVER_STALE_TODAY": {
       let changed = false;
       const tasks = state.tasks.map((t) => {
+        const staleSinceYesterday =
+          todayKey(new Date(t.updatedAt)) < action.today;
+
+        if (t.status === "in_progress") {
+          if (!staleSinceYesterday) return t;
+          changed = true;
+          return {
+            ...t,
+            status: "backlog" as const,
+            updatedAt: nowIso(),
+          };
+        }
+
         if (t.status !== "today") return t;
         const dueBeforeToday = !!t.dueDate && t.dueDate < action.today;
-        const overnightNoDue =
-          !t.dueDate && todayKey(new Date(t.updatedAt)) < action.today;
+        const overnightNoDue = !t.dueDate && staleSinceYesterday;
         if (!dueBeforeToday && !overnightNoDue) return t;
         changed = true;
         return {
