@@ -12,11 +12,23 @@ import { downloadJson, timeToMinutes, cn } from "@/lib/utils";
 import { backupCurrentState, parseImportJson } from "@/lib/storage";
 import type { AppState, EnergyPattern, ThemeMode } from "@/types";
 
+const HABIT_PRESETS = [
+  "Morning stretch",
+  "Read 20 pages",
+  "Walk outside",
+  "Meditate",
+  "Drink water",
+  "No phone first hour",
+  "Journal",
+  "Strength training",
+];
+
 function profileSyncKey(profile: {
   name: string;
   primaryGoal: string;
   workingHours: { start: string; end: string };
   energyPattern: EnergyPattern;
+  desiredHabits: string[];
 }) {
   return [
     profile.name,
@@ -24,6 +36,7 @@ function profileSyncKey(profile: {
     profile.workingHours.start,
     profile.workingHours.end,
     profile.energyPattern,
+    profile.desiredHabits.join(","),
   ].join("\0");
 }
 
@@ -39,6 +52,7 @@ export default function SettingsPage() {
   const [start, setStart] = useState(state.profile.workingHours.start);
   const [end, setEnd] = useState(state.profile.workingHours.end);
   const [energy, setEnergy] = useState(state.profile.energyPattern);
+  const [desiredHabits, setDesiredHabits] = useState<string[]>(state.profile.desiredHabits);
   const [error, setError] = useState("");
   const [resetOpen, setResetOpen] = useState(false);
   const [keepName, setKeepName] = useState(true);
@@ -53,6 +67,7 @@ export default function SettingsPage() {
     setStart(state.profile.workingHours.start);
     setEnd(state.profile.workingHours.end);
     setEnergy(state.profile.energyPattern);
+    setDesiredHabits(state.profile.desiredHabits);
   }
 
   function saveProfile() {
@@ -71,6 +86,7 @@ export default function SettingsPage() {
         primaryGoal: primaryGoal.trim(),
         workingHours: { start, end },
         energyPattern: energy,
+        desiredHabits,
       },
     });
     setError("");
@@ -186,6 +202,37 @@ export default function SettingsPage() {
                   <option value="evening">Evening</option>
                   <option value="mixed">Mixed</option>
                 </Select>
+              </div>
+            </div>
+
+            <div>
+              <Label>Desired habits</Label>
+              <p className="mb-2 text-xs text-muted-foreground">
+                Preferences from onboarding — edit anytime.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {HABIT_PRESETS.map((h) => {
+                  const on = desiredHabits.includes(h);
+                  return (
+                    <button
+                      key={h}
+                      type="button"
+                      onClick={() =>
+                        setDesiredHabits((prev) =>
+                          on ? prev.filter((x) => x !== h) : [...prev, h],
+                        )
+                      }
+                      className={cn(
+                        "rounded-full border px-3 py-1.5 text-sm transition",
+                        on
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-border hover:bg-muted",
+                      )}
+                    >
+                      {h}
+                    </button>
+                  );
+                })}
               </div>
             </div>
             <Button onClick={saveProfile}>Save profile</Button>
