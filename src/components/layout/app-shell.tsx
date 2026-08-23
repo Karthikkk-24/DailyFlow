@@ -19,6 +19,7 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useDayFlow } from "@/context/dayflow-provider";
 import { Skeleton } from "@/components/ui/card";
+import { FocusSessionWatcher } from "@/components/focus/focus-session-watcher";
 
 const NAV = [
   { href: "/today", label: "Today", icon: Home },
@@ -71,6 +72,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="df-surface min-h-screen">
+      <FocusSessionWatcher />
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-60 flex-col border-r border-border bg-sidebar px-3 py-5 lg:flex">
         <Link href="/today" className="mb-8 px-3">
           <span className="font-display text-2xl tracking-tight text-foreground">
