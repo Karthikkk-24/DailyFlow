@@ -134,6 +134,11 @@ export function dayFlowReducer(
       return withSnapshot({
         ...state,
         tasks: state.tasks.filter((t) => t.id !== action.id),
+        focusSessions: state.focusSessions.map((s) =>
+          s.linkedTaskId === action.id
+            ? { ...s, linkedTaskId: undefined }
+            : s,
+        ),
       });
 
     case "MOVE_TASK": {
@@ -246,6 +251,11 @@ export function dayFlowReducer(
       return withSnapshot({
         ...state,
         goals: state.goals.filter((g) => g.id !== action.id),
+        focusSessions: state.focusSessions.map((s) =>
+          s.linkedGoalId === action.id
+            ? { ...s, linkedGoalId: undefined }
+            : s,
+        ),
       });
 
     case "TOGGLE_MILESTONE": {
