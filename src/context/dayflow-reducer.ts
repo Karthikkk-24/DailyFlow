@@ -114,8 +114,16 @@ export function dayFlowReducer(
         const next: Task = { ...t, ...action.patch, updatedAt: nowIso() };
         if (next.status !== "done") {
           next.completedAt = undefined;
-        } else if (!next.completedAt) {
-          next.completedAt = nowIso();
+          if (action.patch.status && action.patch.status !== "done") {
+            next.previousStatus = undefined;
+          }
+        } else {
+          if (t.status !== "done") {
+            next.previousStatus = t.status;
+          }
+          if (!next.completedAt) {
+            next.completedAt = nowIso();
+          }
         }
         return next;
       });

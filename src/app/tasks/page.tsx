@@ -225,10 +225,9 @@ export default function TasksPage() {
       dueTime: form.dueTime || undefined,
     };
     if (editing) {
+      // Status transitions (and previousStatus) are handled entirely by UPDATE_TASK
+      // so we don't MOVE_TASK after the task is already marked done.
       dispatch({ type: "UPDATE_TASK", id: editing.id, patch: payload });
-      if (editing.status !== form.status) {
-        dispatch({ type: "MOVE_TASK", id: editing.id, status: form.status });
-      }
     } else {
       dispatch({ type: "ADD_TASK", task: payload });
     }
