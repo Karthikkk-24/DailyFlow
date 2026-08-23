@@ -469,9 +469,11 @@ export default function FocusPage() {
                   >
                     <option value="">None</option>
                     {state.goals
-                      .filter((g) => g.status === "active")
+                      .filter((g) => g.status === "active" || g.status === "paused")
                       .map((g) => (
-                        <option key={g.id} value={g.id}>{g.title}</option>
+                        <option key={g.id} value={g.id}>
+                          {g.status === "paused" ? `${g.title} (paused)` : g.title}
+                        </option>
                       ))}
                   </Select>
                 </div>
