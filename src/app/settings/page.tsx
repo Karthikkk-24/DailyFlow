@@ -372,7 +372,7 @@ export default function SettingsPage() {
               rel="noreferrer"
               className="text-muted-foreground underline-offset-2 hover:underline"
             >
-              Open issues
+              Issue tracker
             </a>
           </p>
         </Card>
