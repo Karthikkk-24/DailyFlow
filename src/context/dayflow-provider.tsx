@@ -18,6 +18,7 @@ import {
 import { createSeededState } from "@/lib/seed/demo-data";
 import { STORAGE_KEY, loadState, saveState } from "@/lib/storage";
 import { clearFocusSession } from "@/lib/focus-session";
+import { todayKey } from "@/lib/utils";
 
 interface DayFlowContextValue {
   state: AppState;
@@ -117,6 +118,27 @@ export function DayFlowProvider({ children }: { children: ReactNode }) {
     }
     setHydrated();
   }, []);
+
+
+  // Demote stale "today" tasks after midnight / when the calendar day changes.
+  useEffect(() => {
+    if (!hydrated) return;
+    const run = () => {
+      guardedDispatch({ type: "ROLLOVER_STALE_TODAY", today: todayKey() });
+    };
+    run();
+    const id = window.setInterval(run, 60_000);
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") run();
+    };
+    window.addEventListener("focus", run);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.clearInterval(id);
+      window.removeEventListener("focus", run);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [hydrated, guardedDispatch]);
 
   useEffect(() => {
     if (!hydrated) return;

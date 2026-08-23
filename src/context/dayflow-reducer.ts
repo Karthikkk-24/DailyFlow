@@ -39,6 +39,7 @@ export type DayFlowAction =
   | { type: "DELETE_BLOCK"; id: string }
   | { type: "COMPLETE_FOCUS"; session: Omit<FocusSession, "id"> }
   | { type: "RESET_DEMO"; keepName?: boolean }
+  | { type: "ROLLOVER_STALE_TODAY"; today: string }
   | { type: "REPLACE_STATE"; state: AppState };
 
 function touch(state: AppState): AppState {
@@ -109,6 +110,24 @@ export function dayFlowReducer(
         ...state,
         meta: { ...state.meta, focusTickSound: action.enabled },
       });
+
+    case "ROLLOVER_STALE_TODAY": {
+      let changed = false;
+      const tasks = state.tasks.map((t) => {
+        if (t.status !== "today") return t;
+        const dueBeforeToday = !!t.dueDate && t.dueDate < action.today;
+        const overnightNoDue =
+          !t.dueDate && todayKey(new Date(t.updatedAt)) < action.today;
+        if (!dueBeforeToday && !overnightNoDue) return t;
+        changed = true;
+        return {
+          ...t,
+          status: "backlog" as const,
+          updatedAt: nowIso(),
+        };
+      });
+      return changed ? withSnapshot({ ...state, tasks }) : state;
+    }
 
     case "ADD_TASK": {
       const now = nowIso();
