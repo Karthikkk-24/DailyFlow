@@ -14,6 +14,11 @@ export function OnboardingGate({ children }: { children: React.ReactNode }) {
     const onOnboarding = pathname.startsWith("/onboarding");
     if (!state.meta.onboardingCompleted && !onOnboarding) {
       router.replace("/onboarding");
+      return;
+    }
+    // Finished users shouldn't re-enter the wizard via URL (Settings restart clears the flag first).
+    if (state.meta.onboardingCompleted && onOnboarding) {
+      router.replace("/today");
     }
   }, [hydrated, state.meta.onboardingCompleted, pathname, router]);
 
