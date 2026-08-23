@@ -4,7 +4,7 @@ import { createSeededState } from "@/lib/seed/demo-data";
 import { computeStreak, recomputeTodaySnapshot } from "@/lib/analytics/score";
 import { parseImportJson } from "@/lib/storage";
 import { todayKey } from "@/lib/utils";
-import { format, subDays } from "date-fns";
+import { addDays, format, subDays } from "date-fns";
 
 describe("integration: task complete → analytics", () => {
   it("marks a today task done and updates the today snapshot score inputs", () => {
@@ -174,4 +174,32 @@ describe("integration: midnight rollover", () => {
     });
     expect(next.tasks[0]?.status).toBe("backlog");
   });
+  it("demotes stale today tasks with future due date to backlog", () => {
+    const base = createSeededState();
+    const yesterday = format(subDays(new Date(), 1), "yyyy-MM-dd");
+    const tomorrow = format(addDays(new Date(), 1), "yyyy-MM-dd");
+    const stale = {
+      ...base,
+      tasks: [
+        {
+          id: "task-future-today",
+          title: "Future due but left on Today",
+          status: "today" as const,
+          priority: "medium" as const,
+          category: "Work",
+          dueDate: tomorrow,
+          createdAt: `${yesterday}T12:00:00.000Z`,
+          updatedAt: `${yesterday}T12:00:00.000Z`,
+          order: 0,
+        },
+      ],
+    };
+    const next = dayFlowReducer(stale, {
+      type: "ROLLOVER_STALE_TODAY",
+      today: todayKey(),
+    });
+    expect(next.tasks[0]?.status).toBe("backlog");
+  });
+
 });
+
