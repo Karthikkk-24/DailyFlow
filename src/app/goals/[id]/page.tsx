@@ -9,7 +9,7 @@ import { useDayFlow } from "@/context/dayflow-provider";
 import { Badge, EmptyState, PageHeader, ProgressRing } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/modal";
-import { Select } from "@/components/ui/input";
+import { FieldError, Select } from "@/components/ui/input";
 import {
   GoalFormModal,
   type GoalFormValues,
@@ -24,6 +24,7 @@ export default function GoalDetailPage() {
   const { state, dispatch } = useDayFlow();
   const [confirm, setConfirm] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [statusError, setStatusError] = useState("");
   const goal = state.goals.find((g) => g.id === params.id);
 
   if (!goal) {
@@ -90,32 +91,46 @@ export default function GoalDetailPage() {
         </div>
       </div>
 
-      <div className="mt-6 flex flex-wrap items-center gap-3">
-        <label className="text-sm text-muted-foreground" htmlFor="gstatus">
-          Status
-        </label>
-        <Select
-          id="gstatus"
-          className="w-40"
-          value={goal.status}
-          onChange={(e) =>
-            dispatch({
-              type: "UPDATE_GOAL",
-              id: goal.id,
-              patch: { status: e.target.value as GoalStatus },
-            })
-          }
-        >
-          <option value="active">Active</option>
-          <option value="paused">Paused</option>
-          <option value="completed">Completed</option>
-        </Select>
-        <Button variant="secondary" onClick={() => setEditOpen(true)}>
-          <Pencil className="h-4 w-4" /> Edit
-        </Button>
-        <Button variant="danger" onClick={() => setConfirm(true)}>
-          <Trash2 className="h-4 w-4" /> Delete
-        </Button>
+      <div className="mt-6 space-y-2">
+        <div className="flex flex-wrap items-center gap-3">
+          <label className="text-sm text-muted-foreground" htmlFor="gstatus">
+            Status
+          </label>
+          <Select
+            id="gstatus"
+            className="w-40"
+            value={goal.status}
+            onChange={(e) => {
+              const next = e.target.value as GoalStatus;
+              const openMilestones =
+                goal.milestones.length > 0 &&
+                goal.milestones.some((m) => !m.completed);
+              if (next === "completed" && openMilestones) {
+                setStatusError(
+                  "Complete all milestones before marking this goal completed.",
+                );
+                return;
+              }
+              setStatusError("");
+              dispatch({
+                type: "UPDATE_GOAL",
+                id: goal.id,
+                patch: { status: next },
+              });
+            }}
+          >
+            <option value="active">Active</option>
+            <option value="paused">Paused</option>
+            <option value="completed">Completed</option>
+          </Select>
+          <Button variant="secondary" onClick={() => setEditOpen(true)}>
+            <Pencil className="h-4 w-4" /> Edit
+          </Button>
+          <Button variant="danger" onClick={() => setConfirm(true)}>
+            <Trash2 className="h-4 w-4" /> Delete
+          </Button>
+        </div>
+        <FieldError>{statusError}</FieldError>
       </div>
 
       <section className="mt-8">
