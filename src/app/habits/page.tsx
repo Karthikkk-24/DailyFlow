@@ -11,7 +11,8 @@ import {
   HabitIcon,
   type HabitFormValues,
 } from "@/components/habits/habit-form-modal";
-import { cn, todayKey } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { useTodayKey } from "@/hooks/use-today-key";
 import {
   computeStreak,
   isHabitCompletedOn,
@@ -21,7 +22,7 @@ import type { Habit } from "@/types";
 
 export default function HabitsPage() {
   const { state, dispatch } = useDayFlow();
-  const today = todayKey();
+  const today = useTodayKey();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Habit | null>(null);
 
