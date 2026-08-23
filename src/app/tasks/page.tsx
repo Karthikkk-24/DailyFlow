@@ -152,7 +152,7 @@ export default function TasksPage() {
   const [error, setError] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const searchParams = useSearchParams();
-  const today = useTodayKey();
+  const [today] = useTodayKey();
 
   useEffect(() => {
     const editId = searchParams.get("edit");

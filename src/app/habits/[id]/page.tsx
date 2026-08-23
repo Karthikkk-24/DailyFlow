@@ -28,7 +28,7 @@ export default function HabitDetailPage() {
   const { state, dispatch } = useDayFlow();
   const [confirm, setConfirm] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
-  const today = useTodayKey();
+  const [today] = useTodayKey();
 
   const habit = state.habits.find((h) => h.id === params.id);
 

@@ -47,7 +47,7 @@ function toSnapshot(
 export default function AnalyticsPage() {
   const { state } = useDayFlow();
   const [days, setDays] = useState<7 | 30>(7);
-  const today = useTodayKey();
+  const [today] = useTodayKey();
 
   const data = useMemo(() => {
     // Overlay a live "today" row so overnight tabs don't keep yesterday's point

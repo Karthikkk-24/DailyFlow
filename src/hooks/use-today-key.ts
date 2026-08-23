@@ -3,14 +3,19 @@
 import { useEffect, useState } from "react";
 import { todayKey } from "@/lib/utils";
 
-/** Recomputes today's date key after midnight / when the tab becomes visible. */
-export function useTodayKey() {
+/**
+ * Recomputes today's date key after midnight / when the tab becomes visible,
+ * and bumps a tick every minute so intra-day UI (schedule phases, scores) refreshes.
+ */
+export function useTodayKey(): [string, number] {
   const [key, setKey] = useState(() => todayKey());
+  const [tick, setTick] = useState(0);
 
   useEffect(() => {
     const refresh = () => {
       const next = todayKey();
       setKey((prev) => (prev === next ? prev : next));
+      setTick((t) => t + 1);
     };
 
     const onVisibility = () => {
@@ -27,5 +32,5 @@ export function useTodayKey() {
     };
   }, []);
 
-  return key;
+  return [key, tick];
 }

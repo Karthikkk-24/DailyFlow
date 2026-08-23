@@ -50,10 +50,11 @@ export default function TodayPage() {
   const [title, setTitle] = useState("");
   const [error, setError] = useState("");
 
-  const today = useTodayKey();
-  // Recompute when the calendar day advances (lists already depend on `today`).
-  const snap = useMemo(() => recomputeTodaySnapshot(state), [state, today]);
-  const hour = new Date().getHours();
+  const [today, tick] = useTodayKey();
+  // `tick` forces a re-render every minute so wall-clock schedule phases/scores refresh.
+  const now = useMemo(() => new Date(), [tick]);
+  const snap = useMemo(() => recomputeTodaySnapshot(state, now), [state, today, now]);
+  const hour = now.getHours();
   const greeting = greetingForHour(hour);
   const energyTip = energyGuidance(state.profile.energyPattern, hour);
 
@@ -284,7 +285,7 @@ export default function TodayPage() {
           ) : (
             <ol className="relative space-y-3 border-l border-border pl-4">
               {blocks.map((b) => {
-                const phase = blockPhase(b.startTime, b.endTime);
+                const phase = blockPhase(b.startTime, b.endTime, now);
                 return (
                   <li key={b.id} className="relative">
                     <span
