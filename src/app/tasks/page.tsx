@@ -261,17 +261,28 @@ export default function TasksPage() {
     }
 
     if (overTask && task.id !== overTask.id) {
-      const columnTasks = filtered
+      const fullColumn = state.tasks
         .filter((t) => t.status === task.status)
         .sort((a, b) => a.order - b.order);
-      const oldIndex = columnTasks.findIndex((t) => t.id === task.id);
-      const newIndex = columnTasks.findIndex((t) => t.id === overTask.id);
+      const visible = filtered
+        .filter((t) => t.status === task.status)
+        .sort((a, b) => a.order - b.order);
+      const oldIndex = visible.findIndex((t) => t.id === task.id);
+      const newIndex = visible.findIndex((t) => t.id === overTask.id);
       if (oldIndex < 0 || newIndex < 0) return;
-      const reordered = arrayMove(columnTasks, oldIndex, newIndex);
+      const reorderedVisible = arrayMove(visible, oldIndex, newIndex).map(
+        (t) => t.id,
+      );
+      // Merge filtered reorder into the full column so hidden tasks keep stable slots.
+      const visibleSet = new Set(visible.map((t) => t.id));
+      let vi = 0;
+      const orderedIds = fullColumn.map((t) =>
+        visibleSet.has(t.id) ? reorderedVisible[vi++]! : t.id,
+      );
       dispatch({
         type: "REORDER_TASKS",
         status: task.status,
-        orderedIds: reordered.map((t) => t.id),
+        orderedIds,
       });
     }
   }
