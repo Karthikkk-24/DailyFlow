@@ -12,6 +12,7 @@ import {
   type Habit,
   type HabitFrequency,
 } from "@/types";
+import { MAX_HABITS } from "@/schemas/app-state.schema";
 
 function HabitIcon({ name, className }: { name: string; className?: string }) {
   const icons = Icons as unknown as Record<
@@ -62,10 +63,12 @@ function defaultsFromHabit(habit?: Habit | null): HabitFormValues {
 
 function HabitFormFields({
   habit,
+  atCap,
   onClose,
   onSave,
 }: {
   habit?: Habit | null;
+  atCap?: boolean;
   onClose: () => void;
   onSave: (values: HabitFormValues) => void;
 }) {
@@ -84,6 +87,10 @@ function HabitFormFields({
   }
 
   function save() {
+    if (!habit && atCap) {
+      setError(`You can have at most ${MAX_HABITS} habits.`);
+      return;
+    }
     if (!name.trim()) {
       setError("Name is required.");
       return;
@@ -204,11 +211,13 @@ export function HabitFormModal({
   open,
   onClose,
   habit,
+  atCap,
   onSave,
 }: {
   open: boolean;
   onClose: () => void;
   habit?: Habit | null;
+  atCap?: boolean;
   onSave: (values: HabitFormValues) => void;
 }) {
   return (
@@ -222,6 +231,7 @@ export function HabitFormModal({
         <HabitFormFields
           key={habit?.id ?? "new"}
           habit={habit}
+          atCap={atCap}
           onClose={onClose}
           onSave={onSave}
         />

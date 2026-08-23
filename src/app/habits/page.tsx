@@ -19,6 +19,7 @@ import {
   isHabitDueOn,
 } from "@/lib/analytics/score";
 import type { Habit } from "@/types";
+import { MAX_HABITS } from "@/schemas/app-state.schema";
 
 export default function HabitsPage() {
   const { state, dispatch } = useDayFlow();
@@ -138,6 +139,7 @@ export default function HabitsPage() {
           setEditing(null);
         }}
         habit={editing}
+        atCap={!editing && state.habits.length >= MAX_HABITS}
         onSave={save}
       />
     </div>

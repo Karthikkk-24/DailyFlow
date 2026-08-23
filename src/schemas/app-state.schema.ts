@@ -107,12 +107,14 @@ export const analyticsSnapshotSchema = z.object({
   todayScore: z.number().min(0).max(100),
 });
 
+export const MAX_HABITS = 200;
+
 export const appStateSchema = z.object({
   version: z.literal(1),
   meta: appMetaSchema,
   profile: userProfileSchema,
   tasks: z.array(taskSchema).max(5000),
-  habits: z.array(habitSchema).max(200),
+  habits: z.array(habitSchema).max(MAX_HABITS),
   habitLogs: z.array(habitLogSchema).max(50000),
   goals: z.array(goalSchema).max(500),
   scheduleBlocks: z.array(scheduleBlockSchema).max(5000),

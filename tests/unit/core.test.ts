@@ -1,4 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { dayFlowReducer } from "@/context/dayflow-reducer";
+import { MAX_HABITS } from "@/schemas/app-state.schema";
 import {
   computeStreak,
   goalProgress,
@@ -10,6 +12,32 @@ import { createSeededState } from "@/lib/seed/demo-data";
 import type { AppState, Habit, HabitLog } from "@/types";
 import { format, subDays } from "date-fns";
 import { energyGuidance, focusMinutesForEnergy, weekDates } from "@/lib/utils";
+
+describe("ADD_HABIT cap", () => {
+  it("does not add a habit when at MAX_HABITS", () => {
+    const base = createSeededState();
+    const habits = Array.from({ length: MAX_HABITS }, (_, i) => ({
+      id: `hab-${i}`,
+      name: `Habit ${i}`,
+      icon: "Circle",
+      frequency: "daily" as const,
+      targetDays: [0, 1, 2, 3, 4, 5, 6],
+      createdAt: new Date().toISOString(),
+    }));
+    const atCap = { ...base, habits };
+    const next = dayFlowReducer(atCap, {
+      type: "ADD_HABIT",
+      habit: {
+        name: "One too many",
+        icon: "Circle",
+        frequency: "daily",
+        targetDays: [0, 1, 2, 3, 4, 5, 6],
+      },
+    });
+    expect(next.habits).toHaveLength(MAX_HABITS);
+    expect(next.habits.some((h) => h.name === "One too many")).toBe(false);
+  });
+});
 
 describe("goalProgress", () => {
   it("returns 0 for empty milestones", () => {
