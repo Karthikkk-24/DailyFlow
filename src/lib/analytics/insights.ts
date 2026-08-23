@@ -68,7 +68,7 @@ export function mostProductiveDay(snapshots: AnalyticsSnapshot[]): string {
       best = i;
     }
   }
-  return bestAvg < 0 ? "—" : DAY_NAMES[best];
+  return bestAvg <= 0 ? "—" : DAY_NAMES[best];
 }
 
 export function mostProductiveHour(
