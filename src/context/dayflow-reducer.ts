@@ -11,7 +11,7 @@ import type {
 } from "@/types";
 import { createId, nowIso, todayKey } from "@/lib/utils";
 import { upsertTodaySnapshot, upsertSnapshotForDate, rebuildHistorySnapshots } from "@/lib/analytics/score";
-import { createSeededState, personalizeAfterOnboarding } from "@/lib/seed/demo-data";
+import { createSeededState, personalizeAfterOnboarding, habitsMissingFromDesired } from "@/lib/seed/demo-data";
 
 export type DayFlowAction =
   | { type: "HYDRATE"; state: AppState }
@@ -77,11 +77,18 @@ export function dayFlowReducer(
         meta: { ...state.meta, onboardingCompleted: false },
       });
 
-    case "UPDATE_PROFILE":
+    case "UPDATE_PROFILE": {
+      const profile = { ...state.profile, ...action.profile };
+      const newHabits =
+        action.profile.desiredHabits !== undefined
+          ? habitsMissingFromDesired(state.habits, profile.desiredHabits)
+          : [];
       return touch({
         ...state,
-        profile: { ...state.profile, ...action.profile },
+        profile,
+        habits: newHabits.length ? [...state.habits, ...newHabits] : state.habits,
       });
+    }
 
     case "SET_THEME":
       return touch({

@@ -13,7 +13,7 @@ import { createId, nowIso, todayKey, weekDates, timeToMinutes, minutesToTime } f
 import { format, subDays, addDays, getDay } from "date-fns";
 import { rebuildHistorySnapshots } from "@/lib/analytics/score";
 
-function deepWorkBlocksForWorkingHours(profile: UserProfile): ScheduleBlock[] {
+export function deepWorkBlocksForWorkingHours(profile: UserProfile): ScheduleBlock[] {
   const startMin = timeToMinutes(profile.workingHours.start);
   const endMin = timeToMinutes(profile.workingHours.end);
   if (endMin <= startMin) return [];
@@ -382,15 +382,16 @@ export function createSeededState(
   return state;
 }
 
-export function personalizeAfterOnboarding(
-  base: AppState,
-  profile: UserProfile,
-): AppState {
-  const now = nowIso();
-  const existingNames = new Set(base.habits.map((h) => h.name.toLowerCase()));
+/** Create Habit entities for desired habit names that are not already present. */
+export function habitsMissingFromDesired(
+  existing: Habit[],
+  desiredHabits: string[],
+  createdAt = nowIso(),
+): Habit[] {
+  const existingNames = new Set(existing.map((h) => h.name.toLowerCase()));
   const icons = ["Sunrise", "BookOpen", "Dumbbell", "Leaf", "Brain", "Heart"];
   const colors = ["#0D9488", "#2563EB", "#16A34A", "#7C3AED", "#EA580C", "#CA8A04"];
-  const newHabits: Habit[] = profile.desiredHabits
+  return desiredHabits
     .filter((n) => n.trim() && !existingNames.has(n.trim().toLowerCase()))
     .map((name, i) => ({
       id: createId("hab"),
@@ -399,8 +400,16 @@ export function personalizeAfterOnboarding(
       color: colors[i % colors.length],
       frequency: "daily" as const,
       targetDays: [0, 1, 2, 3, 4, 5, 6],
-      createdAt: now,
+      createdAt,
     }));
+}
+
+export function personalizeAfterOnboarding(
+  base: AppState,
+  profile: UserProfile,
+): AppState {
+  const now = nowIso();
+  const newHabits = habitsMissingFromDesired(base.habits, profile.desiredHabits, now);
 
   const seededBlocks = deepWorkBlocksForWorkingHours(profile);
   const occupied = new Set(
