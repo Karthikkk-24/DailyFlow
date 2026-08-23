@@ -174,7 +174,10 @@ export default function FocusPage() {
   }, [complete]);
 
   useEffect(() => {
-    if (timerState === "idle") return;
+    if (timerState === "idle" || timerState === "completed") {
+      if (timerState === "completed") clearFocusSession();
+      return;
+    }
     writeFocusSessionRaw(
       JSON.stringify({
         minutes,
