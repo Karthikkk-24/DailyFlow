@@ -132,7 +132,9 @@ export default function FocusPage() {
   const pendingComplete = useRef(boot.pendingComplete);
   const lastTickSecond = useRef<number | null>(null);
   const remainingRef = useRef(boot.remaining);
-  remainingRef.current = remaining;
+  useEffect(() => {
+    remainingRef.current = remaining;
+  }, [remaining]);
 
   const formatTime = (secs: number) => {
     const m = Math.floor(secs / 60);
@@ -449,6 +451,15 @@ export default function FocusPage() {
               {timerState === "paused" && (
                 <Button size="lg" onClick={resume}>
                   <Play className="h-4 w-4" /> Resume
+                </Button>
+              )}
+              {sessionActive && minutes * 60 - remaining >= 60 && (
+                <Button
+                  size="lg"
+                  variant="secondary"
+                  onClick={() => complete()}
+                >
+                  End & save
                 </Button>
               )}
               {timerState !== "idle" && (
