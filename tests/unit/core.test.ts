@@ -325,17 +325,17 @@ describe("focus session completion claim", () => {
 
   beforeEach(() => {
     store.clear();
-    vi.stubGlobal("window", {
-      sessionStorage: {
-        getItem: (k: string) => store.get(k) ?? null,
-        setItem: (k: string, v: string) => {
-          store.set(k, v);
-        },
-        removeItem: (k: string) => {
-          store.delete(k);
-        },
+    const sessionStorage = {
+      getItem: (k: string) => store.get(k) ?? null,
+      setItem: (k: string, v: string) => {
+        store.set(k, v);
       },
-    });
+      removeItem: (k: string) => {
+        store.delete(k);
+      },
+    };
+    vi.stubGlobal("window", { sessionStorage });
+    vi.stubGlobal("sessionStorage", sessionStorage);
   });
 
   afterEach(() => {
@@ -346,8 +346,8 @@ describe("focus session completion claim", () => {
     vi.resetModules();
     const {
       claimFocusCompletion,
-      claimExpiredFocusSession,
       writeFocusSessionRaw,
+      readFocusSession,
       FOCUS_SESSION_KEY,
     } = await import("@/lib/focus-session");
 
@@ -363,8 +363,8 @@ describe("focus session completion claim", () => {
       }),
     );
 
-    const expired = claimExpiredFocusSession();
-    expect(expired).not.toBeNull();
+    expect(readFocusSession()).not.toBeNull();
+    expect(claimFocusCompletion()).toBe(true);
     expect(claimFocusCompletion()).toBe(false);
     expect(store.has(FOCUS_SESSION_KEY)).toBe(false);
   });
