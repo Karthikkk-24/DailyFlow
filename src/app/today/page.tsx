@@ -51,9 +51,10 @@ export default function TodayPage() {
   const [error, setError] = useState("");
 
   const [today, tick] = useTodayKey();
-  // `tick` forces a re-render every minute so wall-clock schedule phases/scores refresh.
-  const now = useMemo(() => new Date(), [tick]);
-  const snap = useMemo(() => recomputeTodaySnapshot(state, now), [state, today, now]);
+  // Re-render every minute via `tick` so wall-clock schedule phases/scores refresh.
+  void tick;
+  const now = new Date();
+  const snap = recomputeTodaySnapshot(state, now);
   const hour = now.getHours();
   const greeting = greetingForHour(hour);
   const energyTip = energyGuidance(state.profile.energyPattern, hour);
