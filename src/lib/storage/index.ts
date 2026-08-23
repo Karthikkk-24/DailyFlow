@@ -83,7 +83,17 @@ export function saveState(state: AppState): StorageResult<true> {
       ...state,
       meta: { ...state.meta, updatedAt: nowIso() },
     };
-    const serialized = JSON.stringify(next);
+    // Refuse to write invalid data so the next load cannot wipe the workspace.
+    const parsed = appStateSchema.safeParse(next);
+    if (!parsed.success) {
+      const issue = parsed.error.issues[0];
+      const path = issue?.path?.join(".") || "root";
+      return {
+        data: null,
+        error: `Could not save — data is invalid (${path}: ${issue?.message ?? "schema error"}). Fix the field and try again; previous storage was left unchanged.`,
+      };
+    }
+    const serialized = JSON.stringify(parsed.data);
     window.localStorage.setItem(STORAGE_KEY, serialized);
     return { data: true, error: null };
   } catch (err) {

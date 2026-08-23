@@ -1,10 +1,10 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   computeStreak,
   goalProgress,
   recomputeTodaySnapshot,
 } from "@/lib/analytics/score";
-import { parseImportJson } from "@/lib/storage";
+import { parseImportJson, saveState, STORAGE_KEY } from "@/lib/storage";
 import { createSeededState } from "@/lib/seed/demo-data";
 import type { AppState, Habit, HabitLog } from "@/types";
 import { format, subDays } from "date-fns";
@@ -166,6 +166,56 @@ describe("parseImportJson", () => {
     const result = parseImportJson(JSON.stringify({ version: 1 }));
     expect(result.data).toBeNull();
     expect(result.error).toMatch(/Invalid DayFlow/i);
+  });
+});
+
+describe("saveState validation", () => {
+  const store = new Map<string, string>();
+
+  beforeEach(() => {
+    store.clear();
+    vi.stubGlobal("window", {
+      localStorage: {
+        getItem: (k: string) => store.get(k) ?? null,
+        setItem: (k: string, v: string) => {
+          store.set(k, v);
+        },
+        removeItem: (k: string) => {
+          store.delete(k);
+        },
+        clear: () => store.clear(),
+      },
+    });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("writes valid state", () => {
+    const state = createSeededState();
+    const result = saveState(state);
+    expect(result.error).toBeNull();
+    expect(result.data).toBe(true);
+    expect(store.get(STORAGE_KEY)).toBeTruthy();
+  });
+
+  it("refuses invalid state and leaves prior storage unchanged", () => {
+    const good = createSeededState();
+    expect(saveState(good).error).toBeNull();
+    const before = store.get(STORAGE_KEY);
+
+    const bad = {
+      ...good,
+      profile: {
+        ...good.profile,
+        name: "", // schema requires min(1)
+      },
+    };
+    const result = saveState(bad);
+    expect(result.data).toBeNull();
+    expect(result.error).toMatch(/Could not save/i);
+    expect(store.get(STORAGE_KEY)).toBe(before);
   });
 });
 
