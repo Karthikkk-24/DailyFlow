@@ -165,16 +165,6 @@ export default function FocusPage() {
 
   const complete = useCallback(() => {
     if (completedOnce.current) return;
-    // Shared claim so layout FocusSessionWatcher cannot double-log.
-    if (!claimFocusCompletion()) {
-      completedOnce.current = true;
-      setTimerState("completed");
-      return;
-    }
-    completedOnce.current = true;
-    setTimerState("completed");
-    // Focused time = planned − remaining (pause freezes remaining).
-    // Use a ref so the timer tick that hits 0 isn't racing React state.
     const focusedSeconds = Math.max(0, minutes * 60 - remainingRef.current);
     const duration = Math.max(1, Math.round(focusedSeconds / 60));
     const linkedTaskId =
@@ -183,7 +173,7 @@ export default function FocusPage() {
       goalId && state.goals.some((g) => g.id === goalId) ? goalId : undefined;
     if (taskId && !linkedTaskId) setTaskId("");
     if (goalId && !linkedGoalId) setGoalId("");
-    dispatch({
+    const ok = dispatch({
       type: "COMPLETE_FOCUS",
       session: {
         durationMinutes: duration,
@@ -193,6 +183,20 @@ export default function FocusPage() {
         linkedGoalId,
       },
     });
+    if (!ok) {
+      push(
+        "Could not save focus session — storage is full. Export your data or reset demo.",
+        "error",
+      );
+      return;
+    }
+    if (!claimFocusCompletion()) {
+      completedOnce.current = true;
+      setTimerState("completed");
+      return;
+    }
+    completedOnce.current = true;
+    setTimerState("completed");
     push(`Focus session complete — ${duration} minutes`, "success");
   }, [dispatch, minutes, taskId, goalId, push, state.tasks, state.goals]);
 

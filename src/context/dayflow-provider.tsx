@@ -22,7 +22,7 @@ import { todayKey } from "@/lib/utils";
 
 interface DayFlowContextValue {
   state: AppState;
-  dispatch: (action: DayFlowAction) => void;
+  dispatch: (action: DayFlowAction) => boolean;
   hydrated: boolean;
   storageError: string | null;
 }
@@ -45,6 +45,7 @@ const ALLOW_WHILE_BLOCKED = new Set<DayFlowAction["type"]>([
   "HYDRATE",
   "REPLACE_STATE",
   "RESET_DEMO",
+  "COMPLETE_FOCUS",
 ]);
 
 export function DayFlowProvider({ children }: { children: ReactNode }) {
@@ -77,10 +78,14 @@ export function DayFlowProvider({ children }: { children: ReactNode }) {
       return;
     }
     setStorageError(result.error);
-    if (isQuotaError(result.error) && lastPersisted.current) {
-      persistBlocked.current = true;
-      skipSave.current = true;
-      dispatch({ type: "HYDRATE", state: lastPersisted.current });
+    if (isQuotaError(result.error)) {
+      if (!persistBlocked.current && lastPersisted.current) {
+        persistBlocked.current = true;
+        skipSave.current = true;
+        dispatch({ type: "HYDRATE", state: lastPersisted.current });
+      } else {
+        persistBlocked.current = true;
+      }
     }
   }, []);
 
@@ -95,17 +100,18 @@ export function DayFlowProvider({ children }: { children: ReactNode }) {
     applySaveResult(toSave, saveState(toSave));
   }, [applySaveResult]);
 
-  const guardedDispatch = useCallback((action: DayFlowAction) => {
+  const guardedDispatch = useCallback((action: DayFlowAction): boolean => {
     if (persistBlocked.current && !ALLOW_WHILE_BLOCKED.has(action.type)) {
       setStorageError(
         "Storage is full. Export your data, then reset demo data. Further edits are blocked until storage is freed.",
       );
-      return;
+      return false;
     }
     dispatch(action);
     if (action.type === "REPLACE_STATE" || action.type === "RESET_DEMO") {
       clearFocusSession();
     }
+    return true;
   }, []);
 
   useEffect(() => {
